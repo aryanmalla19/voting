@@ -1,121 +1,96 @@
 const User = require("../models/User")
-const asyncHandler = require("../middleware/async") // Assuming you have an asyncHandler middleware
 
-// @desc    Get all users
-// @route   GET /api/users
-// @access  Private/Admin
-exports.getUsers = asyncHandler(async (req, res, next) => {
-  const users = await User.find().select("-password") // Exclude password
-  res.status(200).json({
-    success: true,
-    count: users.length,
-    data: users,
-  })
-})
+exports.getUsers = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search = "", status = "" } = req.query
 
-// @desc    Get single user
-// @route   GET /api/users/:id
-// @access  Private/Admin
-exports.getUser = asyncHandler(async (req, res, next) => {
-  const user = await User.findById(req.params.id).select("-password")
+    const query = {}
+    if (search) {
+      query.$or = [
+        { firstName: { $regex: search, $options: "i" } },
+        { lastName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ]
+    }
+    if (status) {
+      query.status = status
+    }
 
-  if (!user) {
-    return res.status(404).json({ success: false, message: `User not found with id of ${req.params.id}` })
+    const users = await User.find(query)
+      .select("-password -emailVerificationToken -resetPasswordToken -twoFactorSecret")
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .sort({ createdAt: -1 })
+
+    const total = await User.countDocuments(query)
+
+    res.status(200).json({
+      success: true,
+      data: users,
+      pagination: {
+        page: Number.parseInt(page),
+        limit: Number.parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    })
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message })
   }
+}
 
-  res.status(200).json({
-    success: true,
-    data: user,
-  })
-})
-
-// @desc    Create user (Admin only for now, registration is separate)
-// @route   POST /api/users
-// @access  Private/Admin
-exports.createUser = asyncHandler(async (req, res, next) => {
-  const { firstName, lastName, email, password, role } = req.body
-
-  // Basic validation
-  if (!firstName || !lastName || !email || !password) {
-    return res.status(400).json({ success: false, message: "Please provide all required fields" })
+exports.getUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select(
+      "-password -emailVerificationToken -resetPasswordToken -twoFactorSecret",
+    )
+    if (!user) {
+      return res.status(404).json({ message: "User not found" })
+    }
+    res.status(200).json({ success: true, data: user })
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message })
   }
+}
 
-  const userExists = await User.findOne({ email })
-  if (userExists) {
-    return res.status(400).json({ success: false, message: "User already exists with this email" })
+exports.updateUser = async (req, res) => {
+  try {
+    const { status, role } = req.body
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { status, role },
+      { new: true, runValidators: true },
+    ).select("-password -emailVerificationToken -resetPasswordToken -twoFactorSecret")
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" })
+    }
+
+    res.status(200).json({ success: true, data: user })
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message })
   }
+}
 
-  const user = await User.create({
-    firstName,
-    lastName,
-    email,
-    password, // Password will be hashed by the pre-save hook in User model
-    role: role || "voter", // Default to voter if not specified
-  })
+exports.deleteUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id)
+    if (!user) {
+      return res.status(404).json({ message: "User not found" })
+    }
 
-  // Don't send password back, even hashed
-  const userResponse = { ...user._doc }
-  delete userResponse.password
-
-  res.status(201).json({
-    success: true,
-    data: userResponse,
-  })
-})
-
-// @desc    Update user
-// @route   PUT /api/users/:id
-// @access  Private/Admin
-exports.updateUser = asyncHandler(async (req, res, next) => {
-  // Fields that admin can update
-  const { firstName, lastName, email, role, status } = req.body
-
-  const user = await User.findById(req.params.id)
-
-  if (!user) {
-    return res.status(404).json({ success: false, message: `User not found with id of ${req.params.id}` })
+    await User.findByIdAndDelete(req.params.id)
+    res.status(200).json({ success: true, message: "User deleted successfully" })
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message })
   }
+}
 
-  // Update fields if provided
-  if (firstName) user.firstName = firstName
-  if (lastName) user.lastName = lastName
-  if (email) user.email = email // Consider email uniqueness check if changed
-  if (role) user.role = role
-  if (status) user.status = status // Assuming 'status' is a field in your User model
-
-  await user.save()
-
-  // Don't send password back
-  const userResponse = { ...user._doc }
-  delete userResponse.password
-
-  res.status(200).json({
-    success: true,
-    data: userResponse,
-  })
-})
-
-// @desc    Delete user
-// @route   DELETE /api/users/:id
-// @access  Private/Admin
-exports.deleteUser = asyncHandler(async (req, res, next) => {
-  const user = await User.findById(req.params.id)
-
-  if (!user) {
-    return res.status(404).json({ success: false, message: `User not found with id of ${req.params.id}` })
+exports.createUser = async (req, res) => {
+  try {
+    const user = await User.create(req.body)
+    res.status(201).json({ success: true, data: user })
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message })
   }
-
-  // Add any pre-delete logic here (e.g., check if user is deletable)
-  // For example, prevent deleting the last admin or self-deletion by admin
-  if (user.role === "admin" && req.user.id === user._id.toString()) {
-    return res.status(400).json({ success: false, message: "Admin cannot delete themselves." })
-  }
-
-  await User.deleteOne({ _id: req.params.id })
-
-  res.status(200).json({
-    success: true,
-    data: {},
-    message: "User deleted successfully",
-  })
-})
+}

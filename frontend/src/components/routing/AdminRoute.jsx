@@ -14,6 +14,7 @@ const AdminRoute = ({ children }) => {
   }
 
   if (!isAuthenticated || user?.role !== "admin") {
+    console.log("ANNSS");
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 

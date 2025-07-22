@@ -8,30 +8,40 @@ const ConfirmationModal = ({
   onConfirm,
   title,
   message,
-  confirmText = "Confirm",
-  cancelText = "Cancel",
+  confirmText = "Delete",
+  isLoading = false,
 }) => {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
-      <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md mx-4">
-        <div className="flex items-start justify-between mb-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
-            <FaExclamationTriangle className="text-red-500 h-6 w-6 mr-3" />
-            <h2 className="text-xl font-semibold text-neutral-dark">{title}</h2>
+            <FaExclamationTriangle className="text-red-500 text-xl mr-3" />
+            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <FaTimes size={20} />
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600" disabled={isLoading}>
+            <FaTimes />
           </button>
         </div>
-        <p className="text-neutral-dark mb-6">{message}</p>
+
+        <p className="text-gray-600 mb-6">{message}</p>
+
         <div className="flex justify-end space-x-3">
-          <button onClick={onClose} className="btn btn-outline border-gray-300 text-neutral-dark hover:bg-gray-100">
-            {cancelText}
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-gray-600 bg-gray-200 rounded hover:bg-gray-300 transition-colors"
+            disabled={isLoading}
+          >
+            Cancel
           </button>
-          <button onClick={onConfirm} className="btn btn-danger bg-red-600 hover:bg-red-700 text-white">
-            {confirmText}
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors disabled:opacity-50"
+            disabled={isLoading}
+          >
+            {isLoading ? "Processing..." : confirmText}
           </button>
         </div>
       </div>

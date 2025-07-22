@@ -79,6 +79,11 @@ const calculateResults = (election, votes) => {
 
   votes.forEach((vote) => {
     try {
+      const privateKey = election.privateKey
+      if (!privateKey) {
+        console.error("Missing private key for election:", election._id)
+        return
+      }
       const decryptedVote = decryptVote(vote.encryptedVote, election.privateKey)
       if (decryptedVote && decryptedVote.candidateId && candidateVotes.hasOwnProperty(decryptedVote.candidateId)) {
         candidateVotes[decryptedVote.candidateId]++

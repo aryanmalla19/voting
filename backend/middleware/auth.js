@@ -29,3 +29,12 @@ exports.admin = (req, res, next) => {
     res.status(403).json({ message: "Not authorized as an admin" })
   }
 }
+
+exports.authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ message: `Role '${req.user.role}' not authorized` })
+    }
+    next()
+  }
+}

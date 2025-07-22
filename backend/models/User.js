@@ -1,7 +1,7 @@
-// This file remains the same. Path: backend/models/User.js
 const mongoose = require("mongoose")
 const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
+const crypto = require("crypto")
 
 const UserSchema = new mongoose.Schema({
   firstName: {
@@ -31,8 +31,59 @@ const UserSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["active", "inactive"],
-    default: "active",
+    enum: ["active", "inactive", "pending"],
+    default: "pending",
+  },
+  // ID Verification (Passport or License)
+  idType: {
+    type: String,
+    enum: ["passport", "license"],
+    required: [true, "Please select ID type"],
+  },
+  idNumber: {
+    type: String,
+    required: [true, "Please add ID number"],
+    unique: true,
+  },
+  idPlaceOfIssue: {
+    type: String,
+    required: [true, "Please add place of issue"],
+  },
+  idExpiryDate: {
+    type: Date,
+    required: [true, "Please add expiry date"],
+  },
+  // Email Verification
+  isEmailVerified: {
+    type: Boolean,
+    default: false,
+  },
+  emailVerificationToken: String,
+  emailVerificationExpire: Date,
+  // Password Reset
+  resetPasswordToken: String,
+  resetPasswordExpire: Date,
+  // Two-Factor Authentication
+  twoFactorSecret: String,
+  isTwoFactorEnabled: {
+    type: Boolean,
+    default: false,
+  },
+  // Additional Info
+  dateOfBirth: {
+    type: Date,
+    required: [true, "Please add date of birth"],
+  },
+  phoneNumber: {
+    type: String,
+    required: [true, "Please add phone number"],
+  },
+  address: {
+    street: String,
+    city: String,
+    state: String,
+    zipCode: String,
+    country: String,
   },
   votingHistory: [
     {
@@ -66,6 +117,20 @@ UserSchema.methods.getSignedJwtToken = function () {
 
 UserSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password)
+}
+
+UserSchema.methods.getEmailVerificationToken = function () {
+  const verificationToken = crypto.randomBytes(20).toString("hex")
+  this.emailVerificationToken = crypto.createHash("sha256").update(verificationToken).digest("hex")
+  this.emailVerificationExpire = Date.now() + 24 * 60 * 60 * 1000 // 24 hours
+  return verificationToken
+}
+
+UserSchema.methods.getResetPasswordToken = function () {
+  const resetToken = crypto.randomBytes(20).toString("hex")
+  this.resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex")
+  this.resetPasswordExpire = Date.now() + 10 * 60 * 1000 // 10 minutes
+  return resetToken
 }
 
 module.exports = mongoose.model("User", UserSchema)

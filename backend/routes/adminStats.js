@@ -1,9 +1,12 @@
 const express = require("express")
 const { getAdminStats } = require("../controllers/adminStats")
-const { protect, admin } = require("../middleware/auth")
+const { protect, authorize } = require("../middleware/auth")
 
 const router = express.Router()
 
-router.route("/stats").get(protect, admin, getAdminStats)
+router.use(protect)
+router.use(authorize("admin"))
+
+router.get("/stats", getAdminStats)
 
 module.exports = router
