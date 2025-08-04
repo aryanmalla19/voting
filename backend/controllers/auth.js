@@ -55,6 +55,25 @@ const sendVerificationEmail = async (user, verificationToken) => {
   })
 }
 
+const sendPasswordResetEmail = async (user, resetToken) => {
+  const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`
+
+  const message = `
+    <h1>Password Reset Request</h1>
+    <p>You have requested a password reset. Please click the link below to reset your password:</p>
+    <a href="${resetUrl}" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Reset Password</a>
+    <p>This link will expire in 10 minutes.</p>
+    <p>If you did not request this password reset, please ignore this email.</p>
+  `
+
+  await transporter.sendMail({
+    from: process.env.EMAIL_FROM,
+    to: user.email,
+    subject: "Password Reset Request - SecureVote",
+    html: message,
+  })
+}
+
 exports.register = async (req, res) => {
   try {
     const {
@@ -167,6 +186,98 @@ exports.login = async (req, res) => {
     user.lastLogin = Date.now()
     await user.save()
     sendTokenResponse(user, 200, res)
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message })
+  }
+}
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body
+
+    if (!email) {
+      return res.status(400).json({ message: "Please provide an email address" })
+    }
+
+    const user = await User.findOne({ email })
+
+    if (!user) {
+      return res.status(404).json({ message: "No user found with that email address" })
+    }
+
+    // Generate reset token
+    const resetToken = user.getResetPasswordToken()
+    await user.save()
+
+    // Send reset email
+    await sendPasswordResetEmail(user, resetToken)
+
+    res.status(200).json({
+      success: true,
+      message: "Password reset email sent successfully",
+    })
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message })
+  }
+}
+
+exports.verifyResetToken = async (req, res) => {
+  try {
+    const { token } = req.params
+    const resetPasswordToken = crypto.createHash("sha256").update(token).digest("hex")
+
+    const user = await User.findOne({
+      resetPasswordToken,
+      resetPasswordExpire: { $gt: Date.now() },
+    })
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired reset token" })
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Token is valid",
+    })
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message })
+  }
+}
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params
+    const { password } = req.body
+
+    if (!password) {
+      return res.status(400).json({ message: "Please provide a new password" })
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters long" })
+    }
+
+    const resetPasswordToken = crypto.createHash("sha256").update(token).digest("hex")
+
+    const user = await User.findOne({
+      resetPasswordToken,
+      resetPasswordExpire: { $gt: Date.now() },
+    })
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired reset token" })
+    }
+
+    // Set new password
+    user.password = password
+    user.resetPasswordToken = undefined
+    user.resetPasswordExpire = undefined
+    await user.save()
+
+    res.status(200).json({
+      success: true,
+      message: "Password reset successful",
+    })
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message })
   }

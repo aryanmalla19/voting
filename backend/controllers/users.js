@@ -55,10 +55,10 @@ exports.getUser = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
   try {
-    const { status, role } = req.body
+    const { status, role, firstName, lastName, email, phoneNumber, dateOfBirth, address, idVerification } = req.body
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { status, role },
+      { status, role, firstName, lastName, email, phoneNumber, dateOfBirth, address, idVerification },
       { new: true, runValidators: true },
     ).select("-password -emailVerificationToken -resetPasswordToken -twoFactorSecret")
 

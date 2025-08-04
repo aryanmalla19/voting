@@ -104,7 +104,7 @@ const ManageElectionsPage = () => {
               onChange={handleSearch}
               value={searchTerm}
             />
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           </div>
           <Link to="/admin/elections/create" className="btn btn-primary flex items-center">
             <FaPlusCircle className="mr-2" /> Create Election

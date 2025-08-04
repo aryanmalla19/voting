@@ -125,7 +125,7 @@ const ManageUsersPage = () => {
       <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
         <div className="grid md:grid-cols-3 gap-4">
           <div className="relative">
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Search users..."
@@ -135,7 +135,7 @@ const ManageUsersPage = () => {
             />
           </div>
           <div className="relative">
-            <FaFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            {/* <FaFilter className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" /> */}
             <select value={statusFilter} onChange={handleStatusFilter} className="form-input pl-10">
               <option value="">All Statuses</option>
               <option value="active">Active</option>

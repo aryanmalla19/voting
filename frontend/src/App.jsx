@@ -24,11 +24,16 @@ import PrivateRoute from "./components/routing/PrivateRoute"
 import AdminRoute from "./components/routing/AdminRoute"
 import "./index.css"
 import { ToastContainer } from "react-toastify"
+import ViewUserPage from "./pages/admin/ViewUserPage"
+import ScrollToTop from "./components/layout/ScrollToTop"
+import ForgotPasswordPage from "./pages/ForgotPasswordPage"
+import ResetPasswordPage from "./pages/ResetPasswordPage"
 
 function App() {
   return (
     <AuthProvider>
       <Router>
+        <ScrollToTop />
         <div className="App">
           <Navbar />
           <Routes>
@@ -42,6 +47,8 @@ function App() {
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/faq" element={<FAQPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
 
             {/* Protected Routes */}
             <Route
@@ -115,6 +122,14 @@ function App() {
               element={
                 <AdminRoute>
                   <EditUserPage />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/users/:userId"
+              element={
+                <AdminRoute>
+                  <ViewUserPage />
                 </AdminRoute>
               }
             />

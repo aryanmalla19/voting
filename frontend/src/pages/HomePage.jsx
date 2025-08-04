@@ -5,7 +5,7 @@ import { FaLock, FaShieldAlt, FaChartBar, FaUserCheck, FaUniversity, FaBuilding,
 
 const FeatureCard = ({ icon, title, description }) => (
   <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
-    <div className="flex items-center justify-center w-12 h-12 mb-4 rounded-full bg-primary-light text-primary">
+    <div className="flex items-center justify-center w-12 h-12 mb-4 rounded-full bg-secondary text-indigo-950">
       {icon}
     </div>
     <h3 className="text-xl font-semibold mb-2 text-neutral-dark">{title}</h3>
@@ -15,7 +15,7 @@ const FeatureCard = ({ icon, title, description }) => (
 
 const StepCard = ({ number, title, description }) => (
   <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 text-center">
-    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary-light text-primary text-xl font-bold mb-4">
+    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-secondary text-indigo-950 text-xl font-bold mb-4">
       {number}
     </div>
     <h3 className="text-xl font-semibold mb-2 text-neutral-dark">{title}</h3>
@@ -25,7 +25,7 @@ const StepCard = ({ number, title, description }) => (
 
 const UseCaseCard = ({ icon, title, description }) => (
   <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col items-center text-center">
-    <div className="text-primary text-3xl mb-4">{icon}</div>
+    <div className="text-indigo-950 text-3xl mb-4">{icon}</div>
     <h3 className="text-xl font-semibold mb-2 text-neutral-dark">{title}</h3>
     <p className="text-neutral text-sm">{description}</p>
   </div>
@@ -42,10 +42,10 @@ const HomePage = () => {
             A modern, secure, and transparent platform for conducting elections with integrity and confidentiality.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/register" className="btn btn-lg bg-white text-primary hover:bg-gray-100 px-8 py-3 text-lg">
+            <Link to="/register" className="btn btn-lg bg-white text-indigo-950 hover:bg-gray-100 px-8 py-3 text-lg">
               Register to Vote
             </Link>
-            <Link to="/login" className="btn btn-lg border-white text-white hover:bg-white/10 px-8 py-3 text-lg">
+            <Link to="/login" className="btn btn-lg border-indigo bg-indigo-900 text-white hover:bg-indigo-950 px-8 py-3 text-lg">
               Login
             </Link>
           </div>
@@ -129,7 +129,7 @@ const HomePage = () => {
           <p className="text-xl mb-10 max-w-3xl mx-auto">
             Join our secure voting platform today and experience the future of digital democracy.
           </p>
-          <Link to="/register" className="btn btn-lg bg-white text-primary hover:bg-gray-100 px-10 py-4 text-lg">
+          <Link to="/register" className="btn btn-lg bg-white text-indigo-950 hover:bg-gray-100 px-10 py-4 text-lg">
             Register Now
           </Link>
         </div>

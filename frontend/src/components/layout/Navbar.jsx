@@ -4,6 +4,7 @@ import { useContext, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { AuthContext } from "../../context/AuthContext"
 import { FaSignOutAlt, FaSignInAlt, FaUserPlus, FaBars, FaTimes, FaShieldAlt } from "react-icons/fa"
+import { APP_URL } from "../../config.js"
 
 const Navbar = () => {
   const { isAuthenticated, user, logout } = useContext(AuthContext)
@@ -58,7 +59,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center text-primary hover:opacity-80 transition-opacity">
-              <FaShieldAlt className="h-8 w-8" />
+              <img className="w-10 h-10" src={APP_URL + "/logo_white.png"} alt="logo" />
               <span className="ml-2 font-bold text-xl">SecureVote</span>
             </Link>
           </div>
@@ -82,10 +83,10 @@ const Navbar = () => {
                   </NavLink>
                 ))}
             {isAuthenticated && (
-              <div className="relative">
+              <div className="relative hover:bg-red-600 bg-red-500 rounded-md">
                 <button
                   onClick={handleLogout}
-                  className="ml-4 flex items-center px-3 py-2 rounded-md text-sm font-medium text-neutral-dark hover:text-primary hover:bg-primary/10 transition-colors duration-150 ease-in-out"
+                  className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-white transition-colors duration-150 ease-in-out"
                 >
                   <FaSignOutAlt className="mr-2" /> Logout
                 </button>
@@ -130,7 +131,7 @@ const Navbar = () => {
             {isAuthenticated && (
               <button
                 onClick={handleLogout}
-                className="w-full mt-2 flex items-center px-3 py-2 rounded-md text-sm font-medium text-neutral-dark hover:text-primary hover:bg-primary/10 transition-colors duration-150 ease-in-out"
+                className="w-full mt-2 flex items-center px-3 py-2 rounded text-sm font-medium text-neutral-dark hover:text-primary hover:bg-primary/10 transition-colors duration-150 ease-in-out"
               >
                 <FaSignOutAlt className="mr-2" /> Logout
               </button>

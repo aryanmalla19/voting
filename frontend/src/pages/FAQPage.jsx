@@ -62,7 +62,7 @@ const FAQPage = () => {
 
   return (
     <div className="bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12">
           <FaQuestionCircle className="mx-auto h-16 w-16 text-primary mb-4" />
           <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl">Frequently Asked Questions</h1>

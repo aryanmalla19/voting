@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom"
 import { FaTwitter, FaLinkedin, FaGithub, FaShieldAlt } from "react-icons/fa"
+import { APP_URL } from "../../config.js"
 
 const Footer = () => {
   const currentYear = new Date().getFullYear()
@@ -29,7 +30,7 @@ const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center text-white hover:opacity-80 transition-opacity">
-              <FaShieldAlt className="h-8 w-8 text-primary" />
+              <img className="w-10 h-10 rounded-full" src={APP_URL + "/logo_white.png"} alt="logo" />
               <span className="ml-2 font-bold text-xl">SecureVote</span>
             </Link>
             <p className="mt-4 text-sm text-gray-400">

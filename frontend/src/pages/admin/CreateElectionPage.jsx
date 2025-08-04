@@ -66,7 +66,6 @@ const CreateElectionPage = () => {
 
   const handleCandidateChange = (index, field, value) => {
     const newCandidates = [...candidates]
-
     if (field.includes(".")) {
       // Handle nested fields like campaignInfo.experience
       const [parent, child] = field.split(".")
@@ -218,7 +217,7 @@ const CreateElectionPage = () => {
           <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Election Details</h2>
 
           <div>
-            <label htmlFor="title" className="form-label">
+            <label htmlFor="title" className="mb-2">
               Election Title
             </label>
             <input
@@ -233,7 +232,7 @@ const CreateElectionPage = () => {
           </div>
 
           <div>
-            <label htmlFor="description" className="form-label">
+            <label htmlFor="description" className="mb-2">
               Description
             </label>
             <textarea
@@ -249,7 +248,7 @@ const CreateElectionPage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label htmlFor="startDate" className="form-label">
+              <label htmlFor="startDate" className="mb-2">
                 Start Date & Time
               </label>
               <div className="relative">
@@ -261,11 +260,11 @@ const CreateElectionPage = () => {
                   className="form-input pl-10"
                   required
                 />
-                <FaCalendarAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                {/* <FaCalendarAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" /> */}
               </div>
             </div>
             <div>
-              <label htmlFor="endDate" className="form-label">
+              <label htmlFor="endDate" className="mb-2">
                 End Date & Time
               </label>
               <div className="relative">
@@ -277,7 +276,7 @@ const CreateElectionPage = () => {
                   className="form-input pl-10"
                   required
                 />
-                <FaCalendarAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                {/* <FaCalendarAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" /> */}
               </div>
             </div>
           </div>
@@ -318,7 +317,7 @@ const CreateElectionPage = () => {
               {/* Basic Candidate Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="form-label flex items-center">
+                  <label className="mb-2 flex items-center">
                     <FaUser className="mr-2" />
                     Select User *
                   </label>
@@ -338,7 +337,7 @@ const CreateElectionPage = () => {
                 </div>
 
                 <div>
-                  <label className="form-label flex items-center">
+                  <label className="mb-2 flex items-center">
                     <FaIdCard className="mr-2" />
                     Candidate ID
                   </label>
@@ -353,7 +352,7 @@ const CreateElectionPage = () => {
                 </div>
 
                 <div>
-                  <label className="form-label">Full Name *</label>
+                  <label className="mb-2">Full Name *</label>
                   <input
                     type="text"
                     value={candidate.name}
@@ -365,7 +364,7 @@ const CreateElectionPage = () => {
                 </div>
 
                 <div>
-                  <label className="form-label">Position *</label>
+                  <label className="mb-2">Position *</label>
                   <input
                     type="text"
                     value={candidate.position}
@@ -377,7 +376,7 @@ const CreateElectionPage = () => {
                 </div>
 
                 <div>
-                  <label className="form-label flex items-center">
+                  <label className="mb-2 flex items-center">
                     <FaFlag className="mr-2" />
                     Symbol *
                   </label>
@@ -395,7 +394,7 @@ const CreateElectionPage = () => {
               {/* Bio and Agenda */}
               <div className="space-y-4">
                 <div>
-                  <label className="form-label flex items-center">
+                  <label className="mb-2 flex items-center">
                     <FaFileAlt className="mr-2" />
                     Bio * (minimum 50 characters)
                   </label>
@@ -411,7 +410,7 @@ const CreateElectionPage = () => {
                 </div>
 
                 <div>
-                  <label className="form-label flex items-center">
+                  <label className="mb-2 flex items-center">
                     <FaBullhorn className="mr-2" />
                     Campaign Agenda * (minimum 100 characters)
                   </label>
@@ -435,10 +434,10 @@ const CreateElectionPage = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="form-label">Experience</label>
+                    <label className="mb-2">Experience</label>
                     <textarea
                       value={candidate.campaignInfo.experience}
-                      onChange={(e) => handleCandidateChange(index, "experience", e.target.value)}
+                      onChange={(e) => handleCandidateChange(index, "campaignInfo.experience", e.target.value)}
                       className="form-input"
                       rows="3"
                       placeholder="Previous experience and qualifications..."
@@ -446,10 +445,10 @@ const CreateElectionPage = () => {
                   </div>
 
                   <div>
-                    <label className="form-label">Education</label>
+                    <label className="mb-2">Education</label>
                     <textarea
                       value={candidate.campaignInfo.education}
-                      onChange={(e) => handleCandidateChange(index, "education", e.target.value)}
+                      onChange={(e) => handleCandidateChange(index, "campaignInfo.education", e.target.value)}
                       className="form-input"
                       rows="3"
                       placeholder="Educational background..."
@@ -457,10 +456,10 @@ const CreateElectionPage = () => {
                   </div>
 
                   <div>
-                    <label className="form-label">Achievements (one per line)</label>
+                    <label className="mb-2">Achievements (one per line)</label>
                     <textarea
-                      value={candidate.campaignInfo.achievements.join("\n")}
-                      onChange={(e) => handleCandidateChange(index, "achievements", e.target.value)}
+                      value={candidate.campaignInfo.achievements}
+                      onChange={(e) => handleCandidateChange(index, "campaignInfo.achievements", e.target.value)}
                       className="form-input"
                       rows="3"
                       placeholder="Achievement 1&#10;Achievement 2&#10;Achievement 3"
@@ -468,10 +467,10 @@ const CreateElectionPage = () => {
                   </div>
 
                   <div>
-                    <label className="form-label">Campaign Promises (one per line)</label>
+                    <label className="mb-2">Campaign Promises (one per line)</label>
                     <textarea
-                      value={candidate.campaignInfo.promises.join("\n")}
-                      onChange={(e) => handleCandidateChange(index, "promises", e.target.value)}
+                      value={candidate.campaignInfo.promises}
+                      onChange={(e) => handleCandidateChange(index, "campaignInfo.promises", e.target.value)}
                       className="form-input"
                       rows="3"
                       placeholder="Promise 1&#10;Promise 2&#10;Promise 3"
@@ -484,7 +483,7 @@ const CreateElectionPage = () => {
                   <h4 className="font-medium text-gray-700 mb-3">Social Media Links</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="form-label">Website</label>
+                      <label className="mb-2">Website</label>
                       <input
                         type="url"
                         value={candidate.campaignInfo.socialMedia.website}
@@ -494,7 +493,7 @@ const CreateElectionPage = () => {
                       />
                     </div>
                     <div>
-                      <label className="form-label">Twitter</label>
+                      <label className="mb-2">Twitter</label>
                       <input
                         type="url"
                         value={candidate.campaignInfo.socialMedia.twitter}
@@ -504,7 +503,7 @@ const CreateElectionPage = () => {
                       />
                     </div>
                     <div>
-                      <label className="form-label">Facebook</label>
+                      <label className="mb-2">Facebook</label>
                       <input
                         type="url"
                         value={candidate.campaignInfo.socialMedia.facebook}
@@ -514,7 +513,7 @@ const CreateElectionPage = () => {
                       />
                     </div>
                     <div>
-                      <label className="form-label">LinkedIn</label>
+                      <label className="mb-2">LinkedIn</label>
                       <input
                         type="url"
                         value={candidate.campaignInfo.socialMedia.linkedin}

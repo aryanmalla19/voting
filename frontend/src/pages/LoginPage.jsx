@@ -208,14 +208,14 @@ const LoginPage = () => {
                 placeholder="••••••••"
               />
             </div>
-{/* 
+
             <div className="flex items-center justify-between">
               <div className="text-sm">
                 <Link to="/forgot-password" className="font-medium text-primary hover:text-primary-hover">
                   Forgot your password?
                 </Link>
               </div>
-            </div> */}
+            </div>
 
             <div>
               <button
