@@ -360,12 +360,12 @@ const PrivacyPage = () => {
           <div className="space-y-2 mb-6">
             <p>
               Email:{" "}
-              <a href="mailto:privacy@securevote.com" className="underline">
-                privacy@securevote.com
+              <a href="mailto:query.securevote@gmail.com" className="underline">
+                query.securevote@gmail.com
               </a>
             </p>
-            <p>Phone: +1 (555) 123-4567</p>
-            <p>Address: 123 Democracy Street, Vote City, VC 12345</p>
+            <p>Phone: +61 321 654 987</p>
+            <p>Address: The Argus, 288 La Trobe St, Melbourne VIC 3000</p>
           </div>
 
           <div className="border-t border-blue-400 pt-6">

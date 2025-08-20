@@ -153,7 +153,7 @@ const SecurityPage = () => {
           </p>
           <div className="space-x-4">
             <a
-              href="mailto:security@securevote.com"
+              href="mailto:query.securevote@gmail.com"
               className="inline-flex items-center px-6 py-3 border border-white text-base font-medium rounded-md text-primary bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white"
             >
               Contact Security Team

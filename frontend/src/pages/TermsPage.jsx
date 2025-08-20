@@ -203,8 +203,8 @@ const TermsPage = () => {
               <p className="text-gray-600">
                 If you become aware of any violations of these Terms, please report them immediately to our support team
                 at{" "}
-                <a href="mailto:support@securevote.com" className="text-primary hover:text-primary-hover">
-                  support@securevote.com
+                <a href="mailto:query.securevote@gmail.com" className="text-primary hover:text-primary-hover">
+                  query.securevote@gmail.com
                 </a>
                 .
               </p>
@@ -231,12 +231,12 @@ const TermsPage = () => {
           <div className="space-y-2">
             <p>
               Email:{" "}
-              <a href="mailto:legal@securevote.com" className="underline">
-                legal@securevote.com
+              <a href="mailto:query.securevote@gmail.com" className="underline">
+                query.securevote@gmail.com
               </a>
             </p>
-            <p>Phone: +1 (555) 123-4567</p>
-            <p>Address: 123 Democracy Street, Vote City, VC 12345</p>
+            <p>Phone: +61 321 654 987</p>
+            <p>Address: The Argus, 288 La Trobe St, Melbourne VIC 3000</p>
           </div>
         </div>
       </div>

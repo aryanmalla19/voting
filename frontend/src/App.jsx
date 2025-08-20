@@ -1,39 +1,39 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
+import { ToastContainer } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
+
 import { AuthProvider } from "./context/AuthContext"
 import Navbar from "./components/layout/Navbar"
-import Footer from "./components/layout/Footer"
+import PrivateRoute from "./components/routing/PrivateRoute"
+import AdminRoute from "./components/routing/AdminRoute"
+
+// Pages
 import HomePage from "./pages/HomePage"
 import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
-import VerifyEmailPage from "./pages/VerifyEmailPage"
+import ForgotPasswordPage from "./pages/ForgotPasswordPage"
+import ResetPasswordPage from "./pages/ResetPasswordPage"
 import DashboardPage from "./pages/DashboardPage"
 import VotePage from "./pages/VotePage"
 import ResultsPage from "./pages/ResultsPage"
+import VerifyEmailPage from "./pages/VerifyEmailPage"
 import SecurityPage from "./pages/SecurityPage"
 import TermsPage from "./pages/TermsPage"
 import PrivacyPage from "./pages/PrivacyPage"
-import AboutPage from "./pages/AboutPage"
-import FAQPage from "./pages/FAQPage"
+
+// Admin Pages
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage"
 import ManageUsersPage from "./pages/admin/ManageUsersPage"
 import ManageElectionsPage from "./pages/admin/ManageElectionsPage"
 import CreateElectionPage from "./pages/admin/CreateElectionPage"
 import EditElectionPage from "./pages/admin/EditElectionPage"
 import EditUserPage from "./pages/admin/EditUserPage"
-import PrivateRoute from "./components/routing/PrivateRoute"
-import AdminRoute from "./components/routing/AdminRoute"
-import "./index.css"
-import { ToastContainer } from "react-toastify"
 import ViewUserPage from "./pages/admin/ViewUserPage"
-import ScrollToTop from "./components/layout/ScrollToTop"
-import ForgotPasswordPage from "./pages/ForgotPasswordPage"
-import ResetPasswordPage from "./pages/ResetPasswordPage"
 
 function App() {
   return (
     <AuthProvider>
       <Router>
-        <ScrollToTop />
         <div className="App">
           <Navbar />
           <Routes>
@@ -41,16 +41,14 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/security" element={<SecurityPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/faq" element={<FAQPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
 
-            {/* Protected Routes */}
+            {/* Private Routes */}
             <Route
               path="/dashboard"
               element={
@@ -86,10 +84,34 @@ function App() {
               }
             />
             <Route
+              path="/admin/dashboard"
+              element={
+                <AdminRoute>
+                  <AdminDashboardPage />
+                </AdminRoute>
+              }
+            />
+            <Route
               path="/admin/users"
               element={
                 <AdminRoute>
                   <ManageUsersPage />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/users/:id"
+              element={
+                <AdminRoute>
+                  <ViewUserPage />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/users/edit/:id"
+              element={
+                <AdminRoute>
+                  <EditUserPage />
                 </AdminRoute>
               }
             />
@@ -117,25 +139,18 @@ function App() {
                 </AdminRoute>
               }
             />
-            <Route
-              path="/admin/users/edit/:userId"
-              element={
-                <AdminRoute>
-                  <EditUserPage />
-                </AdminRoute>
-              }
-            />
-            <Route
-              path="/admin/users/:userId"
-              element={
-                <AdminRoute>
-                  <ViewUserPage />
-                </AdminRoute>
-              }
-            />
           </Routes>
-          <ToastContainer position="top-right" />
-          <Footer />
+          <ToastContainer
+            position="top-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+          />
         </div>
       </Router>
     </AuthProvider>
