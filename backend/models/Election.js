@@ -49,6 +49,10 @@ const CandidateSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  photo: {
+  type: String,
+  default: null,
+  }
 })
 
 const ElectionSchema = new mongoose.Schema({

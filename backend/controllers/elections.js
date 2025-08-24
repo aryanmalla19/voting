@@ -32,12 +32,35 @@ exports.createElection = async (req, res) => {
     req.body.createdBy = req.user.id
     req.body.publicKey = publicKey
     req.body.privateKey = privateKey
-    const election = await Election.create(req.body)
-    res.status(201).json({ success: true, data: election })
+    const { title, description, startDate, endDate, createdBy } = req.body;
+
+    // Parse candidates JSON
+    let candidates = JSON.parse(req.body.candidates);
+
+    // Match candidates with uploaded files
+    if (req.files && req.files.length > 0) {
+      candidates = candidates.map((cand, idx) => ({
+        ...cand,
+        photo: req.files[idx]?.path, // store path like "uploads/17245-ruk.jpg"
+      }));
+    }
+
+    const election = await Election.create({
+      title,
+      description,
+      startDate,
+      endDate,
+      createdBy,
+      publicKey,
+      candidates,
+    });
+
+    res.status(201).json({ success: true, data: election });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message })
+    res.status(500).json({ message: "Server error", error: error.message });
   }
-}
+};
+
 
 exports.updateElection = async (req, res) => {
   try {

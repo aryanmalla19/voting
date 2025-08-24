@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom"
 import { AuthContext } from "../../context/AuthContext"
 import { API_URL } from "../../config"
 import { toast } from "react-toastify"
-import { FaPlus, FaTrashAlt, FaCalendarAlt, FaUser, FaIdCard, FaFlag, FaFileAlt, FaBullhorn } from "react-icons/fa"
+import { FaPlus, FaTimes, FaTrashAlt, FaUser, FaIdCard, FaFlag, FaFileAlt, FaBullhorn, FaCamera, FaImage } from "react-icons/fa"
 
 const CreateElectionPage = () => {
   const { token } = useContext(AuthContext)
@@ -25,6 +25,8 @@ const CreateElectionPage = () => {
       bio: "",
       symbol: "",
       agenda: "",
+      photo: null,
+      photoPreview: null,
       campaignInfo: {
         experience: "",
         education: "",
@@ -63,6 +65,33 @@ const CreateElectionPage = () => {
       fetchUsers()
     }
   }, [token])
+
+
+  const handlePhotoChange = (index, file) => {
+    if (file && file.type.startsWith("image/")) {
+      console.log(file);
+      const updatedCandidates = [...candidates]
+      updatedCandidates[index].photo = file
+
+      // Create preview URL
+      const reader = new FileReader()
+      console.log(reader);
+      reader.onload = (e) => {
+        updatedCandidates[index].photoPreview = e.target.result
+        setCandidates(updatedCandidates)
+      }
+      reader.readAsDataURL(file)
+    } else {
+      toast.error("Please select a valid image file")
+    }
+  }
+
+  const removePhoto = (index) => {
+    const updatedCandidates = [...candidates]
+    updatedCandidates[index].photo = null
+    updatedCandidates[index].photoPreview = null
+    setCandidates(updatedCandidates)
+  }
 
   const handleCandidateChange = (index, field, value) => {
     const newCandidates = [...candidates]
@@ -105,6 +134,8 @@ const CreateElectionPage = () => {
         bio: "",
         symbol: "",
         agenda: "",
+        photo: null,
+        photoPreview: null,
         campaignInfo: {
           experience: "",
           education: "",
@@ -170,33 +201,51 @@ const CreateElectionPage = () => {
         setIsLoading(false)
         return
       }
-    }
 
-    try {
-      const electionData = {
-        title,
-        description,
-        startDate,
-        endDate,
-        candidates: candidates.filter((c) => c.userId && c.name.trim()),
+      if (!candidate.photo) {
+        toast.error(`Photo is required for candidate ${i + 1}`)
+        setIsLoading(false)
+        return
       }
 
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-
-      await axios.post(`${API_URL}/api/elections`, electionData, config)
-      toast.success("Election created successfully!")
-      navigate("/admin/elections")
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to create election.")
-      console.error("Create election error:", error)
     }
-    setIsLoading(false)
+
+  try {
+    const formData = new FormData()
+
+    formData.append("title", title)
+    formData.append("description", description)
+    formData.append("startDate", startDate)
+    formData.append("endDate", endDate)
+
+    // Remove File object from candidates before sending JSON
+    const candidatesData = candidates.map(({ photo, photoPreview, ...rest }) => rest)
+    formData.append("candidates", JSON.stringify(candidatesData))
+
+    // Append all candidate photos
+    candidates.forEach((c) => {
+      if (c.photo) {
+        formData.append("photos", c.photo) // photo is a File object
+      }
+    })
+
+    const config = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data", // IMPORTANT
+      },
+    }
+
+    await axios.post(`${API_URL}/api/elections`, formData, config)
+    toast.success("Election created successfully!")
+    navigate("/admin/elections")
+  } catch (error) {
+    toast.error(error.response?.data?.message || "Failed to create election.")
+    console.error("Create election error:", error)
   }
+  setIsLoading(false)
+}
+
 
   if (loadingUsers) {
     return (
@@ -388,6 +437,50 @@ const CreateElectionPage = () => {
                     placeholder="e.g., 🌟, 🚀, 🏆"
                     required
                   />
+                </div>
+              </div>
+
+              {/* Photo Upload */}
+              <div>
+                <label className="form-label flex items-center">
+                  <FaCamera className="mr-2 text-blue-500" />
+                  Candidate Photo *
+                </label>
+                <div className="mt-2">
+                  {candidate.photoPreview ? (
+                    <div className="relative inline-block">
+                      <img
+                        src={candidate.photoPreview || "/placeholder.svg"}
+                        alt="Candidate preview"
+                        className="w-32 h-32 object-cover rounded-lg border-2 border-gray-300"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(index)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
+                      >
+                        <FaTimes className="text-xs" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                      <FaImage className="mx-auto h-12 w-12 text-gray-400" />
+                      <div className="mt-2">
+                        <label className="cursor-pointer">
+                          <span className="mt-2 block text-sm font-medium text-gray-900">
+                            Upload candidate photo
+                          </span>
+                          <input
+                            type="file"
+                            className="sr-only"
+                            accept="image/*"
+                            onChange={(e) => handlePhotoChange(index, e.target.files[0])}
+                          />
+                        </label>
+                      </div>
+                      <p className="mt-1 text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                    </div>
+                  )}
                 </div>
               </div>
 

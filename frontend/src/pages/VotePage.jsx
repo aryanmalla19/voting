@@ -1,361 +1,494 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useContext } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import axios from "axios"
+import { AuthContext } from "../context/AuthContext"
 import { API_URL } from "../config"
 import { toast } from "react-toastify"
 import {
+  FaVoteYea,
+  FaUser,
+  FaCalendarAlt,
+  FaClock,
   FaShieldAlt,
-  FaLock,
-  FaInfoCircle,
-  FaExclamationCircle,
   FaCheckCircle,
-  FaGraduationCap,
-  FaBriefcase,
-  FaTrophy,
-  FaHandshake,
+  FaInfoCircle,
   FaGlobe,
   FaTwitter,
   FaFacebook,
   FaLinkedin,
+  FaGraduationCap,
+  FaBriefcase,
+  FaTrophy,
+  FaHandshake,
   FaChevronDown,
   FaChevronUp,
-  FaVoteYea,
 } from "react-icons/fa"
 import Spinner from "../components/layout/Spinner"
 
 const VotePage = () => {
-  const { id: electionId } = useParams()
+  const { id } = useParams()
   const navigate = useNavigate()
+  const { token, user } = useContext(AuthContext)
 
   const [election, setElection] = useState(null)
-  const [selectedCandidateId, setSelectedCandidateId] = useState("")
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [verificationCode, setVerificationCode] = useState(null)
-  const [error, setError] = useState(null)
+  const [selectedCandidate, setSelectedCandidate] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
   const [expandedCandidate, setExpandedCandidate] = useState(null)
+  const [hasVoted, setHasVoted] = useState(false)
 
   useEffect(() => {
-    const fetchElection = async () => {
-      setIsLoading(true)
-      try {
-        const res = await axios.get(`${API_URL}/api/elections/${electionId}`)
-        setElection(res.data.data)
-      } catch (err) {
-        setError(err.response?.data?.message || "Election not found or no longer available.")
-        toast.error(err.response?.data?.message || "Failed to load election.")
-      }
-      setIsLoading(false)
-    }
     fetchElection()
-  }, [electionId])
+    checkVotingStatus()
+  }, [id])
 
-  const handleVoteSubmit = async () => {
-    if (!selectedCandidateId) {
-      toast.error("Please select a candidate to vote for.")
-      return
-    }
-    setIsSubmitting(true)
+  const fetchElection = async () => {
     try {
-      const res = await axios.post(`${API_URL}/api/votes`, {
-        electionId: election._id,
-        candidateId: selectedCandidateId,
+      const response = await fetch(`${API_URL}/api/elections/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       })
-      setVerificationCode(res.data.data.verificationCode)
-      toast.success("Your vote has been securely recorded!")
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Error submitting vote. You may have already voted.")
+
+      if (response.ok) {
+        const data = await response.json()
+        setElection(data.data)
+      } else {
+        toast.error("Failed to fetch election details")
+        navigate("/dashboard")
+      }
+    } catch (error) {
+      toast.error("Network error occurred")
+      navigate("/dashboard")
+    } finally {
+      setLoading(false)
     }
-    setIsSubmitting(false)
   }
 
-  const formatDate = (dateString) =>
-    new Date(dateString).toLocaleDateString(undefined, {
+  const checkVotingStatus = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/votes/check/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setHasVoted(data.hasVoted)
+      }
+    } catch (error) {
+      console.error("Error checking voting status:", error)
+    }
+  }
+
+  const handleVote = async () => {
+    if (!selectedCandidate) {
+      toast.error("Please select a candidate")
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      console.log("Submitting vote for candidate:", selectedCandidate);
+      console.log(election._id);
+      console.log(id);
+      const response = await fetch(`${API_URL}/api/votes`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          electionId: id,
+          candidateId: selectedCandidate,
+        }),
+      })
+
+      if (response.ok) {
+        toast.success("Vote submitted successfully!")
+        navigate("/dashboard")
+      } else {
+        const data = await response.json()
+        toast.error(data.message || "Failed to submit vote")
+      }
+    } catch (error) {
+      toast.error("Network error occurred")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     })
-
-  const getSocialIcon = (platform) => {
-    const icons = {
-      website: FaGlobe,
-      twitter: FaTwitter,
-      facebook: FaFacebook,
-      linkedin: FaLinkedin,
-    }
-    return icons[platform] || FaGlobe
   }
 
-  if (isLoading) return <Spinner />
+  const getElectionStatus = () => {
+    if (!election) return null
 
-  if (error || !election) {
+    const now = new Date()
+    const startDate = new Date(election.startDate)
+    const endDate = new Date(election.endDate)
+
+    if (now < startDate) {
+      return { status: "upcoming", color: "bg-yellow-100 text-yellow-800", text: "Upcoming" }
+    } else if (now >= startDate && now <= endDate) {
+      return { status: "active", color: "bg-green-100 text-green-800", text: "Active" }
+    } else {
+      return { status: "completed", color: "bg-gray-100 text-gray-800", text: "Completed" }
+    }
+  }
+
+  const renderSocialMedia = (socialMedia) => {
+    const platforms = [
+      { key: "website", icon: FaGlobe, color: "text-blue-600", label: "Website" },
+      { key: "twitter", icon: FaTwitter, color: "text-blue-400", label: "Twitter" },
+      { key: "facebook", icon: FaFacebook, color: "text-blue-600", label: "Facebook" },
+      { key: "linkedin", icon: FaLinkedin, color: "text-blue-700", label: "LinkedIn" },
+    ]
+
+    return platforms
+      .filter((platform) => socialMedia[platform.key])
+      .map((platform) => {
+        const IconComponent = platform.icon
+        return (
+          <a
+            key={platform.key}
+            href={socialMedia[platform.key]}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`${platform.color} hover:opacity-75 transition-opacity`}
+            title={platform.label}
+          >
+            <IconComponent className="h-5 w-5" />
+          </a>
+        )
+      })
+  }
+
+  if (loading) {
     return (
-      <div className="container mx-auto py-12 px-4 text-center">
-        <FaExclamationCircle className="mx-auto h-16 w-16 text-red-500 mb-4" />
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">Election Not Found</h1>
-        <p className="text-gray-600 mb-6">{error}</p>
-        <button onClick={() => navigate("/dashboard")} className="btn btn-primary">
-          Return to Dashboard
-        </button>
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner />
       </div>
     )
   }
 
-  if (verificationCode) {
+  if (!election) {
     return (
-      <div className="container mx-auto py-12 px-4">
-        <div className="max-w-2xl mx-auto bg-white shadow-xl rounded-lg p-8 text-center">
-          <FaCheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Vote Successfully Recorded!</h1>
-          <p className="text-gray-600 mb-6">Your vote has been securely encrypted and stored.</p>
-          <div className="bg-gray-100 p-4 rounded-md mb-6">
-            <h3 className="font-semibold text-gray-700">Verification Code:</h3>
-            <p className="text-lg font-mono text-primary break-all">{verificationCode}</p>
-            <p className="text-xs text-gray-500 mt-1">
-              Save this code to verify your vote was counted when results are published.
-            </p>
-          </div>
-          <button onClick={() => navigate("/dashboard")} className="btn btn-primary w-full">
-            Return to Dashboard
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Election Not Found</h2>
+          <button onClick={() => navigate("/dashboard")} className="btn btn-primary">
+            Back to Dashboard
           </button>
         </div>
       </div>
     )
   }
 
-  return (
-    <div className="container mx-auto py-12 px-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Election Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">{election.title}</h1>
-          <p className="text-xl text-gray-600 mb-6">{election.description}</p>
-          <div className="flex justify-center gap-6 text-sm text-gray-500">
-            <span className="flex items-center bg-green-50 px-4 py-2 rounded-full">
-              <FaShieldAlt className="mr-2 text-green-500" /> Secure & Encrypted
-            </span>
-            <span className="flex items-center bg-blue-50 px-4 py-2 rounded-full">
-              <FaLock className="mr-2 text-blue-500" /> Anonymous Ballot
-            </span>
-            <span className="flex items-center bg-purple-50 px-4 py-2 rounded-full">
-              <FaVoteYea className="mr-2 text-purple-500" /> One Vote Per Person
-            </span>
+  const statusInfo = getElectionStatus()
+
+  if (hasVoted) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-xl shadow-xl p-8 text-center">
+            <div className="mx-auto h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
+              <FaCheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">Vote Already Submitted</h1>
+            <p className="text-gray-600 mb-8">
+              You have already voted in this election. Thank you for participating in the democratic process.
+            </p>
+            <div className="space-x-4">
+              <button onClick={() => navigate("/dashboard")} className="btn btn-primary">
+                Back to Dashboard
+              </button>
+              <button onClick={() => navigate(`/results/${id}`)} className="btn btn-neutral">
+                View Results
+              </button>
+            </div>
           </div>
         </div>
+      </div>
+    )
+  }
 
-        {/* Important Information */}
-        <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-6 mb-8 rounded-md" role="alert">
-          <div className="flex">
-            <FaInfoCircle className="h-6 w-6 mr-3 mt-0.5 flex-shrink-0" />
+  if (statusInfo.status !== "active") {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-xl shadow-xl p-8 text-center">
+            <div className="mx-auto h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+              <FaClock className="h-8 w-8 text-gray-600" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">Voting Not Available</h1>
+            <p className="text-gray-600 mb-8">
+              This election is currently {statusInfo.text.toLowerCase()}. Voting is only available during the active
+              period.
+            </p>
+            <button onClick={() => navigate("/dashboard")} className="btn btn-primary">
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-between">
             <div>
-              <p className="font-bold text-lg">Important Voting Information</p>
-              <p className="mt-1">You can only vote once. Your selection cannot be changed after submission.</p>
-              <p className="mt-2 text-sm">
-                <strong>Voting Period:</strong> {formatDate(election.startDate)} to {formatDate(election.endDate)}
-              </p>
+              <h1 className="text-3xl font-bold">{election.title}</h1>
+              <p className="text-blue-100 mt-2">{election.description}</p>
+              <div className="flex items-center space-x-4 mt-4">
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusInfo.color}`}>
+                  {statusInfo.text}
+                </span>
+                <div className="flex items-center text-blue-100">
+                  <FaCalendarAlt className="mr-2" />
+                  <span className="text-sm">
+                    {formatDate(election.startDate)} - {formatDate(election.endDate)}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="flex items-center text-blue-100 mb-2">
+                <FaShieldAlt className="mr-2" />
+                <span className="text-sm">Secure Voting</span>
+              </div>
+              <div className="flex items-center text-blue-100">
+                <FaUser className="mr-2" />
+                <span className="text-sm">
+                  {user?.firstName} {user?.lastName}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Voting Instructions */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+          <div className="flex items-start">
+            <FaInfoCircle className="h-6 w-6 text-blue-600 mt-1 mr-3" />
+            <div>
+              <h3 className="text-lg font-semibold text-blue-900 mb-2">Voting Instructions</h3>
+              <ul className="text-blue-800 space-y-1 text-sm">
+                <li>• Review all candidate information carefully before making your selection</li>
+                <li>• Click on a candidate card to select them for your vote</li>
+                <li>• You can only vote once in this election</li>
+                <li>• Your vote is encrypted and anonymous</li>
+                <li>• Click "Submit Vote" to finalize your choice</li>
+              </ul>
             </div>
           </div>
         </div>
 
-        {/* Candidates Section */}
-        <div className="bg-white shadow-xl rounded-lg overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-6">
-            <h2 className="text-2xl font-semibold text-white">Select Your Candidate</h2>
-            <p className="text-blue-100 mt-1">Review each candidate's profile and make your choice</p>
-          </div>
-
-          <div className="p-8 space-y-6">
-            {election.candidates.map((candidate) => (
-              <div
-                key={candidate._id}
-                className={`border rounded-xl overflow-hidden transition-all duration-300 ${
-                  selectedCandidateId === candidate._id
-                    ? "border-primary ring-2 ring-primary bg-primary/5 shadow-lg"
-                    : "border-gray-300 hover:border-gray-400 hover:shadow-md"
-                }`}
-              >
-                {/* Candidate Header */}
-                <label htmlFor={candidate._id} className="flex items-start p-6 cursor-pointer">
-                  <input
-                    type="radio"
-                    id={candidate._id}
-                    name="candidate"
-                    value={candidate._id}
-                    checked={selectedCandidateId === candidate._id}
-                    onChange={() => setSelectedCandidateId(candidate._id)}
-                    className="h-5 w-5 text-primary border-gray-300 focus:ring-primary mt-2 mr-4 flex-shrink-0"
-                  />
-
-                  <div className="flex-grow">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center mb-4">
-                        {candidate.image ? (
-                          <img
-                            src={candidate.image || "/placeholder.svg"}
-                            alt={candidate.name}
-                            className="h-16 w-16 rounded-full mr-4 object-cover border-2 border-gray-200"
-                          />
-                        ) : (
-                          <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-2xl font-bold mr-4">
-                            {candidate.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </div>
-                        )}
-                        <div>
-                          <h3 className="text-2xl font-bold text-gray-800">{candidate.name}</h3>
-                          <p className="text-lg text-primary font-semibold">{candidate.position}</p>
-                          <div className="flex items-center mt-1">
-                            <span className="text-3xl mr-2">{candidate.symbol}</span>
-                            <span className="text-sm text-gray-500">Symbol</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          setExpandedCandidate(expandedCandidate === candidate._id ? null : candidate._id)
-                        }}
-                        className="text-gray-500 hover:text-gray-700 p-2"
-                      >
-                        {expandedCandidate === candidate._id ? <FaChevronUp /> : <FaChevronDown />}
-                      </button>
-                    </div>
-
-                    {/* Bio */}
-                    <div className="mb-4">
-                      <h4 className="font-semibold text-gray-700 mb-2">Biography</h4>
-                      <p className="text-gray-600 leading-relaxed">{candidate.bio}</p>
-                    </div>
-
-                    {/* Agenda */}
-                    <div className="mb-4">
-                      <h4 className="font-semibold text-gray-700 mb-2">Campaign Agenda</h4>
-                      <p className="text-gray-600 leading-relaxed">{candidate.agenda}</p>
+        {/* Candidates Grid */}
+        <div className="grid gap-8 md:grid-cols-2">
+          {election.candidates.map((candidate) => (
+            <div
+              key={candidate._id}
+              className={`bg-white h-fit rounded-xl shadow-lg overflow-hidden cursor-pointer transition-all duration-200 ${
+                selectedCandidate === candidate._id
+                  ? "ring-4 ring-blue-500 shadow-xl transform scale-105"
+                  : "hover:shadow-xl hover:transform hover:scale-102"
+              }`}
+              onClick={() => setSelectedCandidate(candidate._id)}
+            >
+            
+              {/* Candidate Info */}
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  {selectedCandidate === candidate._id && (
+                  <div className="absolute top-4 right-4">
+                    <div className="bg-blue-500 text-white rounded-full p-2">
+                      <FaCheckCircle className="h-5 w-5" />
                     </div>
                   </div>
-                </label>
-
-                {/* Expanded Details */}
-                {expandedCandidate === candidate._id && candidate.campaignInfo && (
-                  <div className="border-t bg-gray-50 p-6">
-                    <div className="grid md:grid-cols-2 gap-6">
-                      {/* Experience */}
-                      {candidate.campaignInfo.experience && (
-                        <div>
-                          <h4 className="font-semibold text-gray-700 mb-3 flex items-center">
-                            <FaBriefcase className="mr-2 text-blue-500" />
-                            Experience
-                          </h4>
-                          <p className="text-gray-600 leading-relaxed">{candidate.campaignInfo.experience}</p>
-                        </div>
-                      )}
-
-                      {/* Education */}
-                      {candidate.campaignInfo.education && (
-                        <div>
-                          <h4 className="font-semibold text-gray-700 mb-3 flex items-center">
-                            <FaGraduationCap className="mr-2 text-green-500" />
-                            Education
-                          </h4>
-                          <p className="text-gray-600 leading-relaxed">{candidate.campaignInfo.education}</p>
-                        </div>
-                      )}
+                )}
+                  <div>
+                    <div className="flex items-center mb-2">
+                  {candidate.photo ? (
+                    <img
+                      src={ API_URL + '/' + candidate.photo || "/placeholder.svg"}
+                      alt={candidate.name}
+                      className="w-16 border shadow-sm h-16 object-cover rounded-full mr-3"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <FaUser className="w-10 h-10 object-cover rounded-full mr-3 text-gray-400" />
                     </div>
+                  )}
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">{candidate.name}</h3>
+                      <p className="text-blue-600 font-medium">{candidate.position}</p>
+                    </div>
+                    </div>
+                  </div>
+                  <div className="text-2xl">{candidate.symbol}</div>
+                </div>
 
-                    {/* Achievements */}
-                    {candidate.campaignInfo.achievements && candidate.campaignInfo.achievements.length > 0 && (
-                      <div className="mt-6">
-                        <h4 className="font-semibold text-gray-700 mb-3 flex items-center">
-                          <FaTrophy className="mr-2 text-yellow-500" />
-                          Key Achievements
-                        </h4>
-                        <ul className="space-y-2">
-                          {candidate.campaignInfo.achievements.map((achievement, index) => (
-                            <li key={index} className="flex items-start">
-                              <span className="text-yellow-500 mr-2 mt-1">•</span>
-                              <span className="text-gray-600">{achievement}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                <div className="mb-4">
+                  <h4 className="font-semibold text-gray-800 mb-2">Bio</h4>
+                  <p className="text-gray-600 text-sm line-clamp-3">{candidate.bio}</p>
+                </div>
 
-                    {/* Campaign Promises */}
-                    {candidate.campaignInfo.promises && candidate.campaignInfo.promises.length > 0 && (
-                      <div className="mt-6">
-                        <h4 className="font-semibold text-gray-700 mb-3 flex items-center">
-                          <FaHandshake className="mr-2 text-purple-500" />
-                          Campaign Promises
-                        </h4>
-                        <ul className="space-y-2">
-                          {candidate.campaignInfo.promises.map((promise, index) => (
-                            <li key={index} className="flex items-start">
-                              <span className="text-purple-500 mr-2 mt-1">•</span>
-                              <span className="text-gray-600">{promise}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                <div className="mb-4">
+                  <h4 className="font-semibold text-gray-800 mb-2">Agenda</h4>
+                  <p className="text-gray-600 text-sm line-clamp-4">{candidate.agenda}</p>
+                </div>
 
-                    {/* Social Media */}
-                    {candidate.campaignInfo.socialMedia && (
-                      <div className="mt-6">
-                        <h4 className="font-semibold text-gray-700 mb-3">
-                          Connect with {candidate.name.split(" ")[0]}
-                        </h4>
-                        <div className="flex space-x-4">
-                          {Object.entries(candidate.campaignInfo.socialMedia).map(([platform, url]) => {
-                            if (!url) return null
-                            const IconComponent = getSocialIcon(platform)
-                            return (
-                              <a
-                                key={platform}
-                                href={url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center px-3 py-2 bg-white rounded-lg border border-gray-300 hover:border-gray-400 transition-colors"
-                              >
-                                <IconComponent className="mr-2 text-gray-600" />
-                                <span className="text-sm text-gray-700 capitalize">
-                                  {platform === "website" ? "Website" : platform}
-                                </span>
-                              </a>
-                            )
-                          })}
-                        </div>
+                {/* Expandable Campaign Info */}
+                {candidate.campaignInfo && (
+                  <div className="border-t pt-4">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setExpandedCandidate(expandedCandidate === candidate._id ? null : candidate._id)
+                      }}
+                      className="flex items-center justify-between w-full text-left text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      <span>View Campaign Details</span>
+                      {expandedCandidate === candidate._id ? <FaChevronUp /> : <FaChevronDown />}
+                    </button>
+
+                    {expandedCandidate === candidate._id && (
+                      <div className="mt-4 space-y-4" onClick={(e) => e.stopPropagation()}>
+                        {/* Experience */}
+                        {candidate.campaignInfo.experience && (
+                          <div>
+                            <h5 className="flex items-center font-medium text-gray-800 mb-2">
+                              <FaBriefcase className="mr-2 text-blue-500" />
+                              Experience
+                            </h5>
+                            <p className="text-gray-600 text-sm">{candidate.campaignInfo.experience}</p>
+                          </div>
+                        )}
+
+                        {/* Education */}
+                        {candidate.campaignInfo.education && (
+                          <div>
+                            <h5 className="flex items-center font-medium text-gray-800 mb-2">
+                              <FaGraduationCap className="mr-2 text-green-500" />
+                              Education
+                            </h5>
+                            <p className="text-gray-600 text-sm">{candidate.campaignInfo.education}</p>
+                          </div>
+                        )}
+
+                        {/* Achievements */}
+                        {candidate.campaignInfo.achievements && candidate.campaignInfo.achievements.length > 0 && (
+                          <div>
+                            <h5 className="flex items-center font-medium text-gray-800 mb-2">
+                              <FaTrophy className="mr-2 text-yellow-500" />
+                              Achievements
+                            </h5>
+                            <ul className="text-gray-600 text-sm space-y-1">
+                              {candidate.campaignInfo.achievements.map((achievement, index) => (
+                                <li key={index} className="flex items-start">
+                                  <span className="mr-2">•</span>
+                                  <span>{achievement}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Promises */}
+                        {candidate.campaignInfo.promises && candidate.campaignInfo.promises.length > 0 && (
+                          <div>
+                            <h5 className="flex items-center font-medium text-gray-800 mb-2">
+                              <FaHandshake className="mr-2 text-purple-500" />
+                              Campaign Promises
+                            </h5>
+                            <ul className="text-gray-600 text-sm space-y-1">
+                              {candidate.campaignInfo.promises.map((promise, index) => (
+                                <li key={index} className="flex items-start">
+                                  <span className="mr-2">•</span>
+                                  <span>{promise}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Social Media */}
+                        {candidate.campaignInfo.socialMedia && (
+                          <div>
+                            <h5 className="font-medium text-gray-800 mb-2">Connect</h5>
+                            <div className="flex space-x-3">
+                              {renderSocialMedia(candidate.campaignInfo.socialMedia)}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
                 )}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
+        </div>
 
-          {/* Submit Section */}
-          <div className="bg-gray-50 px-8 py-6 flex justify-between items-center border-t">
-            <button
-              onClick={() => navigate("/dashboard")}
-              className="btn text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleVoteSubmit}
-              disabled={isSubmitting || !selectedCandidateId || election.status !== "active"}
-              className="btn btn-primary disabled:opacity-50 flex items-center"
-            >
-              <FaVoteYea className="mr-2" />
-              {isSubmitting ? "Submitting Vote..." : election.status !== "active" ? "Voting Closed" : "Submit My Vote"}
-            </button>
+        {/* Vote Submission */}
+        <div className="mt-12 bg-white rounded-xl shadow-lg p-8">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Ready to Vote?</h2>
+            {selectedCandidate ? (
+              <div className="mb-6">
+                <p className="text-gray-600 mb-2">You have selected:</p>
+                <div className="inline-flex items-center bg-blue-50 rounded-lg px-4 py-2">
+                  <span className="text-lg font-semibold text-blue-900">
+                    {election.candidates.find((c) => c._id === selectedCandidate)?.name}
+                  </span>
+                  <span className="ml-2 text-2xl">
+                    {election.candidates.find((c) => c._id === selectedCandidate)?.symbol}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-gray-600 mb-6">Please select a candidate above to proceed with voting.</p>
+            )}
+
+            <div className="flex justify-center space-x-4">
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleVote}
+                disabled={!selectedCandidate || submitting}
+                className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+              >
+                <FaVoteYea className="mr-2" />
+                {submitting ? "Submitting..." : "Submit Vote"}
+              </button>
+            </div>
+
+            <div className="mt-6 text-sm text-gray-500">
+              <div className="flex items-center justify-center">
+                <FaShieldAlt className="mr-2" />
+                <span>Your vote is encrypted and anonymous</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
