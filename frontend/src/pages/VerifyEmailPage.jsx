@@ -168,9 +168,6 @@ const VerifyEmailPage = () => {
   return (
     <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <FaShieldAlt className="mx-auto h-8 w-auto text-primary mb-4" />
-        </div>
 
         <div className="bg-white py-8 px-4 shadow-xl sm:rounded-lg sm:px-10">{renderContent()}</div>
       </div>

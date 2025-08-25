@@ -103,7 +103,7 @@ const ElectionSchema = new mongoose.Schema({
   },
   privateKey: {
     type: String,
-    required: true,
+    required: [true, "Missing private key"],
   },
 })
 

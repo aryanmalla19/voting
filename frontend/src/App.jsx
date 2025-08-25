@@ -1,34 +1,33 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
-import { ToastContainer } from "react-toastify"
-import "react-toastify/dist/ReactToastify.css"
 
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import { AuthProvider } from "./context/AuthContext"
 import Navbar from "./components/layout/Navbar"
-import PrivateRoute from "./components/routing/PrivateRoute"
-import AdminRoute from "./components/routing/AdminRoute"
-
-// Pages
+import Footer from "./components/layout/Footer"
+import ScrollToTop from "./components/layout/ScrollToTop"
 import HomePage from "./pages/HomePage"
 import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
-import ForgotPasswordPage from "./pages/ForgotPasswordPage"
-import ResetPasswordPage from "./pages/ResetPasswordPage"
+import VerifyEmailPage from "./pages/VerifyEmailPage"
 import DashboardPage from "./pages/DashboardPage"
 import VotePage from "./pages/VotePage"
 import ResultsPage from "./pages/ResultsPage"
-import VerifyEmailPage from "./pages/VerifyEmailPage"
 import SecurityPage from "./pages/SecurityPage"
+import ResetPasswordPage from "./pages/ResetPasswordPage"
+import ForgotPasswordPage from "./pages/ForgotPasswordPage"
 import TermsPage from "./pages/TermsPage"
 import PrivacyPage from "./pages/PrivacyPage"
-
-// Admin Pages
+import AboutPage from "./pages/AboutPage"
+import FAQPage from "./pages/FAQPage"
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage"
 import ManageUsersPage from "./pages/admin/ManageUsersPage"
 import ManageElectionsPage from "./pages/admin/ManageElectionsPage"
 import CreateElectionPage from "./pages/admin/CreateElectionPage"
 import EditElectionPage from "./pages/admin/EditElectionPage"
 import EditUserPage from "./pages/admin/EditUserPage"
-import ViewUserPage from "./pages/admin/ViewUserPage"
+import PrivateRoute from "./components/routing/PrivateRoute"
+import AdminRoute from "./components/routing/AdminRoute"
+import "./index.css"
+import { ToastContainer } from "react-toastify"
 
 function App() {
   return (
@@ -36,19 +35,22 @@ function App() {
       <Router>
         <div className="App">
           <Navbar />
+          <ScrollToTop />
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-            <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
             <Route path="/security" element={<SecurityPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/faq" element={<FAQPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
 
-            {/* Private Routes */}
+            {/* Protected Routes */}
             <Route
               path="/dashboard"
               element={
@@ -84,34 +86,10 @@ function App() {
               }
             />
             <Route
-              path="/admin/dashboard"
-              element={
-                <AdminRoute>
-                  <AdminDashboardPage />
-                </AdminRoute>
-              }
-            />
-            <Route
               path="/admin/users"
               element={
                 <AdminRoute>
                   <ManageUsersPage />
-                </AdminRoute>
-              }
-            />
-            <Route
-              path="/admin/users/:id"
-              element={
-                <AdminRoute>
-                  <ViewUserPage />
-                </AdminRoute>
-              }
-            />
-            <Route
-              path="/admin/users/edit/:id"
-              element={
-                <AdminRoute>
-                  <EditUserPage />
                 </AdminRoute>
               }
             />
@@ -139,18 +117,17 @@ function App() {
                 </AdminRoute>
               }
             />
+            <Route
+              path="/admin/users/edit/:userId"
+              element={
+                <AdminRoute>
+                  <EditUserPage />
+                </AdminRoute>
+              }
+            />
           </Routes>
-          <ToastContainer
-            position="top-right"
-            autoClose={5000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-          />
+          <ToastContainer position="top-right" />
+          <Footer />
         </div>
       </Router>
     </AuthProvider>
