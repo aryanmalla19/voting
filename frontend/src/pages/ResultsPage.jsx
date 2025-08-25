@@ -138,7 +138,7 @@ const ResultsPage = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+      {(results.status === 'completed' && <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
         <div className="bg-white p-6 rounded-xl shadow-lg">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Vote Distribution (Bar Chart)</h2>
           <ResponsiveContainer width="100%" height={400}>
@@ -176,9 +176,10 @@ const ResultsPage = () => {
             </PieChart>
           </ResponsiveContainer>
         </div>
-      </div>
+      </div>)}
 
-      <div className="bg-white p-6 rounded-xl shadow-lg mb-12">
+      {( results.status === 'completed' &&
+        <div className="bg-white p-6 rounded-xl shadow-lg mb-12">
         <h2 className="text-xl font-semibold text-gray-800 mb-4">Detailed Results Table</h2>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -217,6 +218,7 @@ const ResultsPage = () => {
           </table>
         </div>
       </div>
+      )}
 
       <div className="bg-white p-6 rounded-xl shadow-lg">
         <h2 className="text-xl font-semibold text-gray-800 mb-4">Verify Your Vote</h2>

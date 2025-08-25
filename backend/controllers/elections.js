@@ -29,11 +29,8 @@ exports.getElection = async (req, res) => {
 exports.createElection = async (req, res) => {
   try {
     const { publicKey, privateKey } = generateKeyPair()
-    req.body.createdBy = req.user.id
-    req.body.publicKey = publicKey
-    req.body.privateKey = privateKey
-    const { title, description, startDate, endDate, createdBy } = req.body;
-
+    const { title, description, startDate, endDate } = req.body;
+    
     // Parse candidates JSON
     let candidates = JSON.parse(req.body.candidates);
 
@@ -50,9 +47,11 @@ exports.createElection = async (req, res) => {
       description,
       startDate,
       endDate,
-      createdBy,
       publicKey,
+      privateKey,
       candidates,
+      createdAt: Date.now(),
+      createdBy: req.user.id,
     });
 
     res.status(201).json({ success: true, data: election });
@@ -153,9 +152,9 @@ exports.getElectionResults = async (req, res) => {
 
     if (!election) return res.status(404).json({ message: "Election not found" })
     await election.updateStatus()
-    if (election.status !== "completed") {
-      return res.status(400).json({ message: "Results only available for completed elections" })
-    }
+    // if (election.status !== "completed") {
+    //   return res.status(400).json({ message: "Results only available for completed elections" })
+    // }
 
     const votes = await Vote.find({ election: req.params.id })
     const results = calculateResults(election, votes)

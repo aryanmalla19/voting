@@ -100,8 +100,11 @@ const ElectionSchema = new mongoose.Schema({
   publicKey: {
   type: String,
   required: true,
-},
-
+  },
+  privateKey: {
+    type: String,
+    required: true,
+  },
 })
 
 ElectionSchema.pre("save", function (next) {

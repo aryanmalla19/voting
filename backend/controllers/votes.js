@@ -16,8 +16,12 @@ exports.castVote = async (req, res) => {
     const existingVote = await Vote.findOne({ election: electionId, voter: req.user.id })
     if (existingVote) return res.status(400).json({ message: "You have already voted in this election" })
 
-    const candidateExists = election.candidates.some((c) => c._id.toString() === candidateId)
-    if (!candidateExists) return res.status(400).json({ message: "Invalid candidate" })
+    const candidateIndex = election.candidates.findIndex(
+      (c) => c._id.toString() === candidateId
+    )
+    if (candidateIndex === -1) {
+      return res.status(400).json({ message: "Invalid candidate" })
+    }
 
     const encryptedVote = encryptVote({ candidateId }, election.publicKey)
     const verificationCode = generateVerificationCode()
@@ -31,12 +35,18 @@ exports.castVote = async (req, res) => {
       userAgent: req.headers["user-agent"],
     })
 
+    // Increment candidate’s vote count inside election
+    election.candidates[candidateIndex].votes = (election.candidates[candidateIndex].votes || 0) + 1
+    election.totalVotes = (election.totalVotes || 0) + 1
+    await election.save()
+
     // It's better to update user in the user model or service if needed,
     // but for simplicity, if User model has votingHistory:
     // await User.findByIdAndUpdate(req.user.id, { $push: { votingHistory: electionId } });
 
     res.status(201).json({ success: true, data: { verificationCode: vote.verificationCode } })
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: "Server error", error: error.message })
   }
 }
@@ -75,6 +85,7 @@ exports.getVotingHistory = async (req, res) => {
     }))
     res.status(200).json({ success: true, data: votingHistory })
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: "Server error", error: error.message })
   }
 }
