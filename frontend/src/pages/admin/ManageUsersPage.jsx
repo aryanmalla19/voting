@@ -11,18 +11,22 @@ import Spinner from "../../components/layout/Spinner"
 import ConfirmationModal from "../../components/common/ConfirmationModal"
 
 const ManageUsersPage = () => {
+  const queryParams = new URLSearchParams(location.search);
+  const defaultStatus = queryParams.get("status") || "";
+
   const { token } = useContext(AuthContext)
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("")
+  const [statusFilter, setStatusFilter] = useState(defaultStatus);
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 0 })
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, user: null })
   const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
-    fetchUsers()
-  }, [pagination.page, searchTerm, statusFilter])
+    fetchUsers();
+  }, [pagination.page, searchTerm, statusFilter]);
+
 
   const fetchUsers = async () => {
     try {

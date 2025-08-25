@@ -111,21 +111,32 @@ const AdminDashboardPage = () => {
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-gray-700 mb-4">User Statistics</h3>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard icon={<FaUsers />} title="Total Users" value={stats?.users?.total || 0} color="blue-500" />
-            <StatCard
-              icon={<FaUserCheck />}
-              title="Active Users"
-              value={stats?.users?.active || 0}
-              subtitle="Verified & Active"
-              color="green-500"
-            />
-            <StatCard
+            <Link to={"/admin/users"}>
+              <StatCard 
+              icon={<FaUsers />} 
+              title="Total Users" 
+              value={stats?.users?.total || 0} 
+              subtitle={"All registered users"}
+              color="blue-500" />
+            </Link>
+            <Link to={"/admin/users?status=active"}>
+              <StatCard
+                icon={<FaUserCheck />}
+                title="Active Users"
+                value={stats?.users?.active || 0}
+                subtitle="Verified & Active"
+                color="green-500"
+              />
+            </Link>
+            <Link to={"/admin/users?status=pending"}>
+              <StatCard
               icon={<FaClock />}
               title="Pending Users"
               value={stats?.users?.pending || 0}
               subtitle="Awaiting Verification"
               color="yellow-500"
-            />
+              />
+            </Link>
             <StatCard
               icon={<FaCheckCircle />}
               title="Verified Users"

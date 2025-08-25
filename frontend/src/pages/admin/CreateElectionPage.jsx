@@ -69,13 +69,11 @@ const CreateElectionPage = () => {
 
   const handlePhotoChange = (index, file) => {
     if (file && file.type.startsWith("image/")) {
-      console.log(file);
       const updatedCandidates = [...candidates]
       updatedCandidates[index].photo = file
 
       // Create preview URL
       const reader = new FileReader()
-      console.log(reader);
       reader.onload = (e) => {
         updatedCandidates[index].photoPreview = e.target.result
         setCandidates(updatedCandidates)
@@ -414,14 +412,19 @@ const CreateElectionPage = () => {
 
                 <div>
                   <label className="mb-2">Position *</label>
-                  <input
-                    type="text"
+                  <select
                     value={candidate.position}
                     onChange={(e) => handleCandidateChange(index, "position", e.target.value)}
                     className="form-input"
-                    placeholder="e.g., President, Vice President"
                     required
-                  />
+                  >
+                    <option value="">Select a position</option>
+                    <option value="President">President</option>
+                    <option value="Vice President">Vice President</option>
+                    <option value="Secretary">Secretary</option>
+                    <option value="Treasurer">Treasurer</option>
+                    <option value="Member">Member</option>
+                  </select>
                 </div>
 
                 <div>
@@ -429,22 +432,47 @@ const CreateElectionPage = () => {
                     <FaFlag className="mr-2" />
                     Symbol *
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={candidate.symbol}
                     onChange={(e) => handleCandidateChange(index, "symbol", e.target.value)}
                     className="form-input"
-                    placeholder="e.g., 🌟, 🚀, 🏆"
                     required
-                  />
+                  >
+                    <option value="">Select a symbol</option>
+                    {/* Nature / Objects */}
+                    <option value="🌟">🌟 Star</option>
+                    <option value="🚀">🚀 Rocket</option>
+                    <option value="🏆">🏆 Trophy</option>
+                    <option value="🦅">🦅 Eagle</option>
+                    <option value="🌹">🌹 Rose</option>
+                    <option value="🌳">🌳 Tree</option>
+                    <option value="🌞">🌞 Sun</option>
+                    <option value="🔥">🔥 Fire</option>
+
+                    {/* Animals */}
+                    <option value="🦁">🦁 Lion</option>
+                    <option value="🐘">🐘 Elephant</option>
+                    <option value="🐅">🐅 Tiger</option>
+                    <option value="🐦">🐦 Bird</option>
+                    <option value="🐢">🐢 Tortoise</option>
+                    <option value="🦋">🦋 Butterfly</option>
+
+                    {/* Miscellaneous */}
+                    <option value="⚡">⚡ Lightning</option>
+                    <option value="💎">💎 Diamond</option>
+                    <option value="🔑">🔑 Key</option>
+                    <option value="✋">✋ Hand</option>
+                    <option value="📚">📚 Book</option>
+                    <option value="⚽">⚽ Ball</option>
+                  </select>
                 </div>
               </div>
 
               {/* Photo Upload */}
               <div>
-                <label className="form-label flex items-center">
-                  <FaCamera className="mr-2 text-blue-500" />
-                  Candidate Photo *
+                <label className="flex items-center">
+                  <FaCamera className="mr-2" />
+                  <p>Candidate Photo *</p> 
                 </label>
                 <div className="mt-2">
                   {candidate.photoPreview ? (
