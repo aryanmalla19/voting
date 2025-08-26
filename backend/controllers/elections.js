@@ -5,13 +5,51 @@ const { generateKeyPair, decryptVote } = require("../utils/encryption") // decry
 
 exports.getElections = async (req, res) => {
   try {
-    const elections = await Election.find().select("-privateKey").populate("createdBy", "firstName lastName")
-    await Promise.all(elections.map((election) => election.updateStatus()))
-    res.status(200).json({ success: true, count: elections.length, data: elections })
+    const { page = 1, limit = 10, search = "", status = "" } = req.query
+
+    const query = {}
+    if (search) {
+      query.title = { $regex: search, $options: "i" }
+    }
+    if (status) {
+      query.status = status
+    }
+
+    const total = await Election.countDocuments(query)
+
+    let elections = await Election.find(query)
+      .select("-privateKey")
+      .populate("createdBy", "firstName lastName")
+      .limit(Number(limit))
+      .skip((Number(page) - 1) * Number(limit))
+      .sort({ createdAt: -1 })
+
+    // Update statuses dynamically
+    elections = await Promise.all(
+      elections.map(async (election) => {
+        election.updateStatus()
+        await election.save({ validateBeforeSave: false })
+        return election
+      })
+    )
+
+    res.status(200).json({
+      success: true,
+      count: elections.length,
+      data: elections,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    })
   } catch (error) {
+    console.error(error)
     res.status(500).json({ message: "Server error", error: error.message })
   }
 }
+
 
 exports.getElection = async (req, res) => {
   try {

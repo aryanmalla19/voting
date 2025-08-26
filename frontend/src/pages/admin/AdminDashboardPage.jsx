@@ -151,33 +151,42 @@ const AdminDashboardPage = () => {
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-gray-700 mb-4">Election Statistics</h3>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard
+            <Link to={"/admin/elections"}>
+              <StatCard
               icon={<FaVoteYea />}
               title="Total Elections"
               value={stats?.elections?.total || 0}
+              subtitle="All created elections"
               color="indigo-500"
-            />
-            <StatCard
-              icon={<FaChartBar />}
-              title="Active Elections"
-              value={stats?.elections?.active || 0}
-              subtitle="Currently Running"
-              color="green-500"
-            />
-            <StatCard
-              icon={<FaClock />}
-              title="Upcoming Elections"
-              value={stats?.elections?.upcoming || 0}
-              subtitle="Scheduled"
-              color="blue-500"
-            />
-            <StatCard
-              icon={<FaCheckCircle />}
-              title="Completed Elections"
-              value={stats?.elections?.completed || 0}
-              subtitle="Finished"
-              color="gray-500"
-            />
+              />
+            </Link>
+            <Link to={"/admin/elections?status=active"}>
+              <StatCard
+                icon={<FaChartBar />}
+                title="Active Elections"
+                value={stats?.elections?.active || 0}
+                subtitle="Currently Running"
+                color="green-500"
+              />
+            </Link>
+            <Link to={"/admin/elections?status=upcoming"}>
+              <StatCard
+                icon={<FaClock />}
+                title="Upcoming Elections"
+                value={stats?.elections?.upcoming || 0}
+                subtitle="Scheduled"
+                color="blue-500"
+              />
+            </Link>
+            <Link to={"/admin/elections?status=completed"}>
+              <StatCard
+                icon={<FaCheckCircle />}
+                title="Completed Elections"
+                value={stats?.elections?.completed || 0}
+                subtitle="Finished"
+                color="gray-500"
+              />
+            </Link>
           </div>
         </div>
 
@@ -204,7 +213,8 @@ const AdminDashboardPage = () => {
           <div className="space-y-3">
             {stats?.recentActivity?.users?.length > 0 ? (
               stats.recentActivity.users.map((user) => (
-                <div key={user._id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                <Link to={`/admin/users/${user._id}`}>
+                  <div key={user._id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
                   <div>
                     <p className="font-medium text-gray-900">
                       {user.firstName} {user.lastName}
@@ -225,7 +235,8 @@ const AdminDashboardPage = () => {
                     </span>
                     <p className="text-xs text-gray-500 mt-1">{new Date(user.createdAt).toLocaleDateString()}</p>
                   </div>
-                </div>
+                  </div>
+                </Link>
               ))
             ) : (
               <p className="text-gray-500">No recent users</p>
@@ -238,26 +249,28 @@ const AdminDashboardPage = () => {
           <div className="space-y-3">
             {stats?.recentActivity?.elections?.length > 0 ? (
               stats.recentActivity.elections.map((election) => (
-                <div key={election._id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
-                  <div>
-                    <p className="font-medium text-gray-900">{election.title}</p>
-                    <p className="text-sm text-gray-600">
-                      {new Date(election.startDate).toLocaleDateString()} -{" "}
-                      {new Date(election.endDate).toLocaleDateString()}
-                    </p>
+                <Link to={`/results/${election._id}`}>
+                  <div key={election._id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                    <div>
+                      <p className="font-medium text-gray-900">{election.title}</p>
+                      <p className="text-sm text-gray-600">
+                        {new Date(election.startDate).toLocaleDateString()} -{" "}
+                        {new Date(election.endDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <span
+                      className={`px-2 py-1 text-xs rounded-full ${
+                        election.status === "active"
+                          ? "bg-green-100 text-green-800"
+                          : election.status === "upcoming"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {election.status}
+                    </span>
                   </div>
-                  <span
-                    className={`px-2 py-1 text-xs rounded-full ${
-                      election.status === "active"
-                        ? "bg-green-100 text-green-800"
-                        : election.status === "upcoming"
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-gray-100 text-gray-800"
-                    }`}
-                  >
-                    {election.status}
-                  </span>
-                </div>
+                </Link>
               ))
             ) : (
               <p className="text-gray-500">No recent elections</p>

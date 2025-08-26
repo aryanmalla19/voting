@@ -23,6 +23,7 @@ import ManageUsersPage from "./pages/admin/ManageUsersPage"
 import ManageElectionsPage from "./pages/admin/ManageElectionsPage"
 import CreateElectionPage from "./pages/admin/CreateElectionPage"
 import EditElectionPage from "./pages/admin/EditElectionPage"
+import ViewUserPage from "./pages/admin/ViewUserPage"
 import EditUserPage from "./pages/admin/EditUserPage"
 import PrivateRoute from "./components/routing/PrivateRoute"
 import AdminRoute from "./components/routing/AdminRoute"
@@ -122,6 +123,14 @@ function App() {
               element={
                 <AdminRoute>
                   <EditUserPage />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/users/:userId"
+              element={
+                <AdminRoute>
+                  <ViewUserPage />
                 </AdminRoute>
               }
             />

@@ -12,6 +12,7 @@ exports.castVote = async (req, res) => {
     if (!election) return res.status(404).json({ message: "Election not found" })
     await election.updateStatus()
     if (election.status !== "active") return res.status(400).json({ message: "Voting not active for this election" })
+    if (!election.privateKey) return res.status(400).json({ message: "Missing private key of this election" })
 
     const existingVote = await Vote.findOne({ election: electionId, voter: req.user.id })
     if (existingVote) return res.status(400).json({ message: "You have already voted in this election" })
