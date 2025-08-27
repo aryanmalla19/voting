@@ -83,6 +83,7 @@ const ManageElectionsPage = () => {
   const openDeleteModal = (election) => {
     setElectionToDelete(election)
     setShowDeleteModal(true)
+    console.log("MEOWWW");
   }
 
   const closeDeleteModal = () => {
@@ -205,7 +206,7 @@ const ManageElectionsPage = () => {
                       onClick={() => openDeleteModal(election)}
                       className="text-red-600 hover:text-red-800"
                       title="Delete Election"
-                      disabled={election.status === "active" || election.status === "completed"}
+                      // disabled={election.status === "active" || election.status === "completed"}
                     >
                       <FaTrashAlt className="inline h-5 w-5" />
                     </button>

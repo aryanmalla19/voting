@@ -47,6 +47,7 @@ const UserSchema = new mongoose.Schema({
   },
   idPlaceOfIssue: {
     type: String,
+    default: "Someplace",
     required: [true, "Please add place of issue"],
   },
   idExpiryDate: {
@@ -124,6 +125,14 @@ UserSchema.methods.getEmailVerificationToken = function () {
   this.emailVerificationToken = crypto.createHash("sha256").update(verificationToken).digest("hex")
   this.emailVerificationExpire = Date.now() + 24 * 60 * 60 * 1000 // 24 hours
   return verificationToken
+}
+
+UserSchema.methods.updateStatus = function () {
+  if (this.isEmailVerified) {
+    this.status = "active"
+  } else {
+    this.status = "pending"
+  }
 }
 
 UserSchema.methods.getResetPasswordToken = function () {

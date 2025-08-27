@@ -56,11 +56,16 @@ exports.getUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const { status, role, firstName, lastName, email, phoneNumber, dateOfBirth, address, idVerification } = req.body
+    const { isVerified:isEmailVerified, expiryDate:idExpiryDate } = idVerification || {};
+
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { status, role, firstName, lastName, email, phoneNumber, dateOfBirth, address, idVerification },
+      { status, role, firstName, lastName, email, phoneNumber, dateOfBirth, ...address, ...idVerification, isEmailVerified, idExpiryDate},
       { new: true, runValidators: true },
     ).select("-password -emailVerificationToken -resetPasswordToken -twoFactorSecret")
+
+    await user.updateStatus();
+    await user.save();
 
     if (!user) {
       return res.status(404).json({ message: "User not found" })
@@ -68,6 +73,11 @@ exports.updateUser = async (req, res) => {
 
     res.status(200).json({ success: true, data: user })
   } catch (error) {
+    if (error.name === "ValidationError") {
+      const errors = Object.values(error.errors).map((err) => err.message);
+      return res.status(400).json({ success: false, message:errors[0] });
+    }
+
     res.status(500).json({ message: "Server error", error: error.message })
   }
 }

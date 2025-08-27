@@ -111,7 +111,7 @@ const Navbar = () => {
       {/* Mobile Menu */}
       {isMenuOpen && (
         <div className="md:hidden">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+          <div className="flex flex-col px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {commonLinks.map((link) => (
               <NavLink key={link.to} to={link.to}>
                 {link.text}

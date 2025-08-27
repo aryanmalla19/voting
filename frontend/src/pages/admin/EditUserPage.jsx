@@ -57,7 +57,6 @@ const EditUserPage = () => {
         const config = { headers: { Authorization: `Bearer ${token}` } }
         const res = await axios.get(`${API_URL}/api/users/${userId}`, config)
         const userData = res.data.data
-
         setFormData({
           firstName: userData.firstName || "",
           lastName: userData.lastName || "",
@@ -74,12 +73,12 @@ const EditUserPage = () => {
             country: userData.address?.country || "",
           },
           idVerification: {
-            idType: userData.idVerification?.idType || "",
-            idNumber: userData.idVerification?.idNumber || "",
-            expiryDate: userData.idVerification?.expiryDate
-              ? new Date(userData.idVerification.expiryDate).toISOString().split("T")[0]
+            idType: userData?.idType || "",
+            idNumber: userData?.idNumber || "",
+            expiryDate: userData?.idExpiryDate
+              ? new Date(userData.idExpiryDate).toISOString().split("T")[0]
               : "",
-            isVerified: userData.idVerification?.isVerified || false,
+            isVerified: userData?.isEmailVerified || false,
           },
         })
       } catch (error) {
@@ -123,6 +122,7 @@ const EditUserPage = () => {
       toast.success("User updated successfully!")
       navigate("/admin/users")
     } catch (error) {
+      console.log(error.response?.data);
       toast.error(error.response?.data?.message || "Failed to update user.")
       console.error("Update user error:", error)
     }
@@ -361,7 +361,7 @@ const EditUserPage = () => {
                     value={formData.idVerification.idType}
                     onChange={handleChange}
                   >
-                    <option value="">Select ID Type</option>
+                    {/* <option value="">Select ID Type</option> */}
                     <option value="passport">Passport</option>
                     <option value="drivers_license">Driver's License</option>
                     <option value="national_id">National ID</option>
@@ -406,7 +406,7 @@ const EditUserPage = () => {
                     onChange={handleChange}
                   />
                   <label htmlFor="idVerification.isVerified" className="ml-2 block text-sm text-gray-900">
-                    ID Verified
+                    Email Verified
                   </label>
                 </div>
               </div>

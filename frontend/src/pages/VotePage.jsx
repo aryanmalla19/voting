@@ -40,7 +40,6 @@ const VotePage = () => {
 
   useEffect(() => {
     fetchElection()
-    checkVotingStatus()
   }, [id])
 
   const fetchElection = async () => {
@@ -63,23 +62,6 @@ const VotePage = () => {
       navigate("/dashboard")
     } finally {
       setLoading(false)
-    }
-  }
-
-  const checkVotingStatus = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/votes/check/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setHasVoted(data.hasVoted)
-      }
-    } catch (error) {
-      console.error("Error checking voting status:", error)
     }
   }
 

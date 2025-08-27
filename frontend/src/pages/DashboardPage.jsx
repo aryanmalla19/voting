@@ -23,7 +23,7 @@ const StatCard = ({ title, value, icon, colorClass }) => (
 )
 
 const ElectionCard = ({ election, formatDate, getStatusBadge, showVoteButton, showResultsButton }) => (
-  <div className="bg-white shadow-lg rounded-xl overflow-hidden transition-all hover:shadow-2xl">
+  <div className="bg-white flex flex-col justify-between shadow-lg rounded-xl overflow-hidden transition-all hover:shadow-2xl">
     <div className="p-6">
       <div className="flex justify-between items-start mb-2">
         <h3 className="text-xl font-semibold text-gray-900">{election.title}</h3>
@@ -168,7 +168,7 @@ const DashboardPage = () => {
       </div>
 
       <div className="mb-8 border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+        <nav className="-mb-px flex space-x-8 flex-wrap" aria-label="Tabs">
           {tabs.map((tab) => (
             <button
               key={tab.name}

@@ -122,11 +122,6 @@ const ManageUsersPage = () => {
           <h1 className="text-3xl font-bold text-neutral-dark">Manage Users</h1>
           <p className="text-neutral mt-2">View and manage user accounts</p>
         </div>
-       
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
         <div className="grid md:grid-cols-3 gap-4">
           <div className="relative">
             <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
