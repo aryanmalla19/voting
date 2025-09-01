@@ -101,6 +101,7 @@ const DashboardPage = () => {
           upcoming: electionsRes.data.data.filter((e) => e.status === "upcoming"),
           completed: electionsRes.data.data.filter((e) => e.status === "completed"),
         })
+        console.log(historyRes.data.data);
         setVotingHistory(historyRes.data.data)
       } catch (error) {
         toast.error("Error fetching dashboard data. Please try again.")
@@ -189,21 +190,26 @@ const DashboardPage = () => {
         {currentTabData && currentTabData.length > 0 ? (
           activeTab === "history" ? (
             <div className="space-y-6">
-              {votingHistory.map((vote) => (
-                <div key={vote.id} className="bg-white shadow-lg rounded-xl p-6">
-                  <h3 className="text-lg font-semibold text-gray-900">{vote.electionTitle}</h3>
-                  <p className="text-sm text-gray-500 mt-1">Voted on: {formatDate(vote.votedOn)}</p>
-                  <p className="text-sm text-gray-700 mt-3">
-                    Verification Code:{" "}
-                    <span className="font-mono bg-gray-100 p-1 rounded">{vote.verificationCode}</span>
-                  </p>
-                  <div className="mt-4">
-                    <Link to={`/results/${vote.electionId}`} className="btn btn-outline-primary text-sm">
-                      View Results
-                    </Link>
+              {votingHistory.map((vote) =>
+                vote.votes.map((v, idx) => (
+                  <div key={`${vote.id}-${idx}`} className="bg-white shadow-lg rounded-xl p-6">
+                    <h3 className="text-lg font-semibold text-gray-900">{vote.electionTitle}</h3>
+                    <p className="text-sm text-gray-500 mt-1">Voted on: {formatDate(v.votedOn)}</p>
+                    <p className="text-sm text-gray-700 mt-3">
+                      Verification Code:{" "}
+                      <span className="font-mono bg-gray-100 p-1 rounded">{v.verificationCode}</span>
+                    </p>
+                    <div className="mt-4">
+                      <Link
+                        to={`/results/${vote.electionId}`}
+                        className="btn btn-outline-primary text-sm"
+                      >
+                        View Results
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

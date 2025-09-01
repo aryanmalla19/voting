@@ -6,566 +6,830 @@ import axios from "axios"
 import { AuthContext } from "../../context/AuthContext"
 import { API_URL } from "../../config"
 import { toast } from "react-toastify"
+import {
+  FaSave,
+  FaTimes,
+  FaPlus,
+  FaTrash,
+  FaUser,
+  FaCalendarAlt,
+  FaInfoCircle,
+  FaChevronDown,
+  FaChevronUp,
+  FaGlobe,
+  FaTwitter,
+  FaFacebook,
+  FaLinkedin,
+  FaEdit,
+  FaBriefcase,
+  FaImage,
+} from "react-icons/fa"
 import Spinner from "../../components/layout/Spinner"
-import { FaSave, FaTimes, FaPlus, FaTrash, FaUser, FaIdCard, FaFlag, FaFileAlt, FaBullhorn } from "react-icons/fa"
 
 const EditElectionPage = () => {
   const { electionId } = useParams()
   const navigate = useNavigate()
   const { token } = useContext(AuthContext)
 
+  const [users, setUsers] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [expandedPosition, setExpandedPosition] = useState(null)
+  const [expandedCandidate, setExpandedCandidate] = useState({})
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     startDate: "",
     endDate: "",
-    candidates: [
-      {
-        userId: "",
-        candidateId: "",
-        name: "",
-        position: "",
-        bio: "",
-        symbol: "",
-        agenda: "",
-        campaignInfo: {
-          experience: "",
-          education: "",
-          achievements: [],
-          promises: [],
-          socialMedia: {
-            website: "",
-            twitter: "",
-            facebook: "",
-            linkedin: "",
-          },
-        },
-      },
-    ],
+    status: "draft",
+    positions: [],
   })
-  const [users, setUsers] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
-      setIsLoading(true)
-      try {
-        const config = { headers: { Authorization: `Bearer ${token}` } }
+      await Promise.all([fetchElection(), fetchUsers()])
+    }
+    fetchData()
+  }, [electionId])
 
-        // Fetch election data and users in parallel
-        const [electionRes, usersRes] = await Promise.all([
-          axios.get(`${API_URL}/api/elections/${electionId}`, config),
-          axios.get(`${API_URL}/api/users`, config),
-        ])
+  const fetchElection = async () => {
+    try {
+      const config = { headers: { Authorization: `Bearer ${token}` } }
+      const res = await axios.get(`${API_URL}/api/elections/${electionId}`, config)
+      const election = res.data.data
 
-        const electionData = electionRes.data.data
-        setUsers(usersRes.data.data || [])
+      setFormData({
+        title: election.title,
+        description: election.description,
+        startDate: new Date(election.startDate).toISOString().slice(0, 16),
+        endDate: new Date(election.endDate).toISOString().slice(0, 16),
+        status: election.status,
+        positions:
+          election.positions?.map((position) => ({
+            ...position,
+            candidates:
+              position.candidates?.map((candidate) => ({
+                ...candidate,
+                campaignInfo: {
+                  experience: candidate.campaignInfo?.experience || "",
+                  education: candidate.campaignInfo?.education || "",
+                  achievements: candidate.campaignInfo?.achievements || [],
+                  promises: candidate.campaignInfo?.promises || [],
+                  socialMedia: {
+                    website: candidate.campaignInfo?.socialMedia?.website || "",
+                    twitter: candidate.campaignInfo?.socialMedia?.twitter || "",
+                    facebook: candidate.campaignInfo?.socialMedia?.facebook || "",
+                    linkedin: candidate.campaignInfo?.socialMedia?.linkedin || "",
+                  },
+                },
+              })) || [],
+          })) || [],
+      })
+    } catch (error) {
+      toast.error("Failed to fetch election details")
+      console.error("Fetch election error:", error)
+      navigate("/admin/elections")
+    }
+  }
 
-        // Format dates for datetime-local input
-        const formatDateTime = (dateString) => {
-          const date = new Date(dateString)
-          return date.toISOString().slice(0, 16)
-        }
-
-        setFormData({
-          title: electionData.title,
-          description: electionData.description,
-          startDate: formatDateTime(electionData.startDate),
-          endDate: formatDateTime(electionData.endDate),
-          candidates: electionData.candidates.map((c) => ({
-            _id: c._id,
-            userId: c.userId || "",
-            candidateId: c.candidateId || "",
-            name: c.name || "",
-            position: c.position || "",
-            bio: c.bio || "",
-            symbol: c.symbol || "",
-            agenda: c.agenda || "",
-            campaignInfo: {
-              experience: c.campaignInfo?.experience || "",
-              education: c.campaignInfo?.education || "",
-              achievements: c.campaignInfo?.achievements || [],
-              promises: c.campaignInfo?.promises || [],
-              socialMedia: {
-                website: c.campaignInfo?.socialMedia?.website || "",
-                twitter: c.campaignInfo?.socialMedia?.twitter || "",
-                facebook: c.campaignInfo?.socialMedia?.facebook || "",
-                linkedin: c.campaignInfo?.socialMedia?.linkedin || "",
-              },
-            },
-          })),
-        })
-      } catch (error) {
-        toast.error("Failed to fetch election details.")
-        console.error("Fetch election error:", error)
-        navigate("/admin/elections")
-      }
+  const fetchUsers = async () => {
+    try {
+      const config = { headers: { Authorization: `Bearer ${token}` } }
+      const res = await axios.get(`${API_URL}/api/users`, config)
+      setUsers(res.data.data || [])
+    } catch (error) {
+      toast.error("Failed to fetch users")
+      console.error("Fetch users error:", error)
+    } finally {
       setIsLoading(false)
     }
-
-    if (token && electionId) {
-      fetchData()
-    }
-  }, [electionId, token, navigate])
+  }
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-  const handleCandidateChange = (index, field, value) => {
-    const newCandidates = [...formData.candidates]
+  const handlePositionChange = (positionIndex, field, value) => {
+    const updatedPositions = [...formData.positions]
+    updatedPositions[positionIndex][field] = value
+    setFormData({ ...formData, positions: updatedPositions })
+  }
+
+  const handleCandidateChange = (positionIndex, candidateIndex, field, value) => {
+    const updatedPositions = [...formData.positions]
 
     if (field.includes(".")) {
-      // Handle nested fields
       const [parent, child] = field.split(".")
-      if (parent === "socialMedia") {
-        newCandidates[index].campaignInfo.socialMedia[child] = value
-      } else {
-        newCandidates[index].campaignInfo[child] = value
+      if (parent === "campaignInfo") {
+        updatedPositions[positionIndex].candidates[candidateIndex].campaignInfo[child] = value
       }
-    } else if (field === "achievements" || field === "promises") {
-      // Handle array fields
-      newCandidates[index].campaignInfo[field] = value.split("\n").filter((item) => item.trim())
     } else {
-      newCandidates[index][field] = value
+      updatedPositions[positionIndex].candidates[candidateIndex][field] = value
 
-      // Auto-update name when user is selected
+      // Auto-populate name when user is selected
       if (field === "userId" && value) {
         const selectedUser = users.find((user) => user._id === value)
         if (selectedUser) {
-          newCandidates[index].name = `${selectedUser.firstName} ${selectedUser.lastName}`
-          // Only generate new candidateId if it doesn't exist
-          if (!newCandidates[index].candidateId) {
-            newCandidates[index].candidateId =
+          updatedPositions[positionIndex].candidates[candidateIndex].name =
+            `${selectedUser.firstName} ${selectedUser.lastName}`
+          // Only generate new candidate ID if it doesn't exist
+          if (!updatedPositions[positionIndex].candidates[candidateIndex].candidateId) {
+            updatedPositions[positionIndex].candidates[candidateIndex].candidateId =
               `CAND_${Date.now()}_${Math.random().toString(36).substr(2, 5).toUpperCase()}`
           }
         }
       }
     }
 
-    setFormData({ ...formData, candidates: newCandidates })
+    setFormData({ ...formData, positions: updatedPositions })
   }
 
-  const addCandidate = () => {
+  const handleSocialMediaChange = (positionIndex, candidateIndex, platform, value) => {
+    const updatedPositions = [...formData.positions]
+    updatedPositions[positionIndex].candidates[candidateIndex].campaignInfo.socialMedia[platform] = value
+    setFormData({ ...formData, positions: updatedPositions })
+  }
+
+  const handleArrayChange = (positionIndex, candidateIndex, field, value) => {
+    const updatedPositions = [...formData.positions]
+    updatedPositions[positionIndex].candidates[candidateIndex].campaignInfo[field] = value
+      .split("\n")
+      .filter((item) => item.trim())
+    setFormData({ ...formData, positions: updatedPositions })
+  }
+
+  const addPosition = () => {
     setFormData({
       ...formData,
-      candidates: [
-        ...formData.candidates,
+      positions: [
+        ...formData.positions,
         {
-          userId: "",
-          candidateId: "",
-          name: "",
-          position: "",
-          bio: "",
-          symbol: "",
-          agenda: "",
-          campaignInfo: {
-            experience: "",
-            education: "",
-            achievements: [],
-            promises: [],
-            socialMedia: {
-              website: "",
-              twitter: "",
-              facebook: "",
-              linkedin: "",
-            },
-          },
+          positionId: `POS_${Date.now()}_${Math.random().toString(36).substr(2, 5).toUpperCase()}`,
+          title: "",
+          description: "",
+          candidates: [],
         },
       ],
     })
   }
 
-  const removeCandidate = (index) => {
-    const newCandidates = formData.candidates.filter((_, i) => i !== index)
-    setFormData({ ...formData, candidates: newCandidates })
+  const removePosition = (positionIndex) => {
+    if (formData.positions.length > 1) {
+      const updatedPositions = formData.positions.filter((_, i) => i !== positionIndex)
+      setFormData({ ...formData, positions: updatedPositions })
+    }
+  }
+
+  const addCandidate = (positionIndex) => {
+    const updatedPositions = [...formData.positions]
+    updatedPositions[positionIndex].candidates.push({
+      userId: "",
+      candidateId: "",
+      name: "",
+      bio: "",
+      symbol: "",
+      agenda: "",
+      photo: "",
+      campaignInfo: {
+        experience: "",
+        education: "",
+        achievements: [],
+        promises: [],
+        socialMedia: {
+          website: "",
+          twitter: "",
+          facebook: "",
+          linkedin: "",
+        },
+      },
+    })
+    setFormData({ ...formData, positions: updatedPositions })
+  }
+
+  const removeCandidate = (positionIndex, candidateIndex) => {
+    const updatedPositions = [...formData.positions]
+    if (updatedPositions[positionIndex].candidates.length > 1) {
+      updatedPositions[positionIndex].candidates = updatedPositions[positionIndex].candidates.filter(
+        (_, i) => i !== candidateIndex,
+      )
+      setFormData({ ...formData, positions: updatedPositions })
+    }
+  }
+
+  const validateForm = () => {
+    if (!formData.title.trim()) {
+      toast.error("Election title is required")
+      return false
+    }
+
+    if (!formData.description.trim()) {
+      toast.error("Election description is required")
+      return false
+    }
+
+    if (!formData.startDate || !formData.endDate) {
+      toast.error("Start and end dates are required")
+      return false
+    }
+
+    if (new Date(formData.startDate) >= new Date(formData.endDate)) {
+      toast.error("End date must be after start date")
+      return false
+    }
+
+    if (formData.positions.length === 0) {
+      toast.error("At least one position is required")
+      return false
+    }
+
+    for (let i = 0; i < formData.positions.length; i++) {
+      const position = formData.positions[i]
+
+      if (!position.title.trim()) {
+        toast.error(`Position title is required for position ${i + 1}`)
+        return false
+      }
+
+      if (!position.description.trim()) {
+        toast.error(`Position description is required for position ${i + 1}`)
+        return false
+      }
+
+      if (position.candidates.length === 0) {
+        toast.error(`At least one candidate is required for position: ${position.title}`)
+        return false
+      }
+
+      for (let j = 0; j < position.candidates.length; j++) {
+        const candidate = position.candidates[j]
+
+        if (!candidate.userId) {
+          toast.error(`Please select a user for candidate ${j + 1} in position: ${position.title}`)
+          return false
+        }
+
+        if (!candidate.name.trim()) {
+          toast.error(`Name is required for candidate ${j + 1} in position: ${position.title}`)
+          return false
+        }
+
+        if (!candidate.bio.trim() || candidate.bio.length < 50) {
+          toast.error(`Bio must be at least 50 characters for candidate ${j + 1} in position: ${position.title}`)
+          return false
+        }
+
+        if (!candidate.symbol.trim()) {
+          toast.error(`Symbol is required for candidate ${j + 1} in position: ${position.title}`)
+          return false
+        }
+
+        if (!candidate.agenda.trim() || candidate.agenda.length < 100) {
+          toast.error(`Agenda must be at least 100 characters for candidate ${j + 1} in position: ${position.title}`)
+          return false
+        }
+      }
+    }
+
+    return true
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    if (!validateForm()) return
+
     setIsSubmitting(true)
-
-    // Validation
-    if (new Date(formData.startDate) >= new Date(formData.endDate)) {
-      toast.error("End date must be after start date.")
-      setIsSubmitting(false)
-      return
-    }
-
-    // Validate candidates
-    for (let i = 0; i < formData.candidates.length; i++) {
-      const candidate = formData.candidates[i]
-      if (!candidate.userId) {
-        toast.error(`Please select a user for candidate ${i + 1}`)
-        setIsSubmitting(false)
-        return
-      }
-      if (!candidate.name.trim()) {
-        toast.error(`Candidate ${i + 1} name is required`)
-        setIsSubmitting(false)
-        return
-      }
-      if (!candidate.position.trim()) {
-        toast.error(`Position is required for candidate ${i + 1}`)
-        setIsSubmitting(false)
-        return
-      }
-      if (!candidate.bio.trim() || candidate.bio.length < 50) {
-        toast.error(`Bio must be at least 50 characters for candidate ${i + 1}`)
-        setIsSubmitting(false)
-        return
-      }
-      if (!candidate.symbol.trim()) {
-        toast.error(`Symbol is required for candidate ${i + 1}`)
-        setIsSubmitting(false)
-        return
-      }
-      if (!candidate.agenda.trim() || candidate.agenda.length < 100) {
-        toast.error(`Agenda must be at least 100 characters for candidate ${i + 1}`)
-        setIsSubmitting(false)
-        return
-      }
-    }
-
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } }
-      const payload = {
-        ...formData,
-        candidates: formData.candidates.filter((c) => c.userId && c.name.trim()),
-      }
-
-      await axios.put(`${API_URL}/api/elections/${electionId}`, payload, config)
+      await axios.put(`${API_URL}/api/elections/${electionId}`, formData, config)
       toast.success("Election updated successfully!")
       navigate("/admin/elections")
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to update election.")
+      toast.error(error.response?.data?.message || "Failed to update election")
       console.error("Update election error:", error)
     }
     setIsSubmitting(false)
+  }
+
+  const toggleCandidateExpansion = (positionIndex, candidateIndex) => {
+    const key = `${positionIndex}-${candidateIndex}`
+    setExpandedCandidate((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }))
   }
 
   if (isLoading) return <Spinner />
 
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      <div className="bg-white p-8 rounded-xl shadow-xl max-w-6xl mx-auto">
-        <h1 className="text-2xl font-bold text-neutral-dark mb-6">Edit Election</h1>
-
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Basic Election Info */}
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Election Details</h2>
-
-            <div>
-              <label htmlFor="title" className="mb-1">
-                Election Title
-              </label>
-              <input
-                type="text"
-                name="title"
-                id="title"
-                className="form-input"
-                value={formData.title}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="description" className="mb-1">
-                Description
-              </label>
-              <textarea
-                name="description"
-                id="description"
-                rows="3"
-                className="form-input"
-                value={formData.description}
-                onChange={handleChange}
-              ></textarea>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="startDate" className="mb-1">
-                  Start Date & Time
-                </label>
-                <input
-                  type="datetime-local"
-                  name="startDate"
-                  id="startDate"
-                  className="form-input"
-                  value={formData.startDate}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="endDate" className="mb-1">
-                  End Date & Time
-                </label>
-                <input
-                  type="datetime-local"
-                  name="endDate"
-                  id="endDate"
-                  className="form-input"
-                  value={formData.endDate}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </div>
+      <div className="max-w-6xl mx-auto">
+        <div className="bg-white rounded-xl shadow-xl overflow-hidden">
+          <div className="bg-gradient-to-r from-green-600 to-blue-600 px-8 py-6">
+            <h1 className="text-3xl font-bold text-white flex items-center">
+              <FaEdit className="mr-3" />
+              Edit Election
+            </h1>
+            <p className="text-green-100 mt-2">Update election details, positions, and candidate information</p>
           </div>
 
-          {/* Candidates Section */}
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Candidates</h2>
+          <form onSubmit={handleSubmit} className="p-8 space-y-8">
+            {/* Election Details */}
+            <div className="bg-gray-50 rounded-lg p-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <FaInfoCircle className="mr-2 text-blue-500" />
+                Election Details
+              </h2>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="title" className="form-label">
+                    Election Title *
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    id="title"
+                    className="form-input"
+                    value={formData.title}
+                    onChange={handleChange}
+                    placeholder="e.g., Student Council Election 2024"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="status" className="form-label">
+                    Status
+                  </label>
+                  <select
+                    name="status"
+                    id="status"
+                    className="form-input"
+                    value={formData.status}
+                    onChange={handleChange}
+                  >
+                    <option value="draft">Draft</option>
+                    <option value="active">Active</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <label htmlFor="description" className="form-label">
+                  Description *
+                </label>
+                <textarea
+                  name="description"
+                  id="description"
+                  rows="3"
+                  className="form-input"
+                  value={formData.description}
+                  onChange={handleChange}
+                  placeholder="Describe the purpose and scope of this election..."
+                  required
+                />
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6 mt-4">
+                <div>
+                  <label htmlFor="startDate" className="form-label flex items-center">
+                    <FaCalendarAlt className="mr-2 text-green-500" />
+                    Start Date & Time *
+                  </label>
+                  <input
+                    type="datetime-local"
+                    name="startDate"
+                    id="startDate"
+                    className="form-input"
+                    value={formData.startDate}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="endDate" className="form-label flex items-center">
+                    <FaCalendarAlt className="mr-2 text-red-500" />
+                    End Date & Time *
+                  </label>
+                  <input
+                    type="datetime-local"
+                    name="endDate"
+                    id="endDate"
+                    className="form-input"
+                    value={formData.endDate}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Positions Section */}
+            <div className="bg-gray-50 rounded-lg p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+                  <FaBriefcase className="mr-2 text-purple-500" />
+                  Positions ({formData.positions.length})
+                </h2>
+                <button type="button" onClick={addPosition} className="btn btn-primary flex items-center text-sm">
+                  <FaPlus className="mr-2" />
+                  Add Position
+                </button>
+              </div>
+
+              {formData.positions.map((position, positionIndex) => (
+                <div key={positionIndex} className="bg-white rounded-lg border border-gray-200 mb-6 overflow-hidden">
+                  <div className="bg-gradient-to-r from-purple-100 to-blue-100 px-6 py-4 flex justify-between items-center">
+                    <h3 className="font-semibold text-gray-800">
+                      Position {positionIndex + 1}: {position.title || "Unnamed Position"}
+                    </h3>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => setExpandedPosition(expandedPosition === positionIndex ? null : positionIndex)}
+                        className="text-gray-600 hover:text-gray-800"
+                      >
+                        {expandedPosition === positionIndex ? <FaChevronUp /> : <FaChevronDown />}
+                      </button>
+                      {formData.positions.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removePosition(positionIndex)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          <FaTrash />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="p-6 space-y-4">
+                    {/* Position Details */}
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="form-label">Position Title *</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          value={position.title}
+                          onChange={(e) => handlePositionChange(positionIndex, "title", e.target.value)}
+                          placeholder="e.g., President, Vice President"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="form-label">Position Description *</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          value={position.description}
+                          onChange={(e) => handlePositionChange(positionIndex, "description", e.target.value)}
+                          placeholder="Brief description of the position"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {/* Candidates for this Position */}
+                    <div className="border-t pt-4">
+                      <div className="flex justify-between items-center mb-4">
+                        <h4 className="font-semibold text-gray-700 flex items-center">
+                          <FaUser className="mr-2 text-green-500" />
+                          Candidates ({position.candidates.length})
+                        </h4>
+                        <button
+                          type="button"
+                          onClick={() => addCandidate(positionIndex)}
+                          className="btn btn-secondary flex items-center text-sm"
+                        >
+                          <FaPlus className="mr-2" />
+                          Add Candidate
+                        </button>
+                      </div>
+
+                      {position.candidates.map((candidate, candidateIndex) => {
+                        const candidateKey = `${positionIndex}-${candidateIndex}`
+                        const isExpanded = expandedCandidate[candidateKey]
+
+                        return (
+                          <div
+                            key={candidateIndex}
+                            className="bg-gray-50 rounded-lg border border-gray-300 mb-4 overflow-hidden"
+                          >
+                            <div className="bg-gray-200 px-4 py-3 flex justify-between items-center">
+                              <h5 className="font-medium text-gray-800">
+                                Candidate {candidateIndex + 1}: {candidate.name || "Unnamed"}
+                              </h5>
+                              <div className="flex items-center space-x-2">
+                                <button
+                                  type="button"
+                                  onClick={() => toggleCandidateExpansion(positionIndex, candidateIndex)}
+                                  className="text-gray-600 hover:text-gray-800"
+                                >
+                                  {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
+                                </button>
+                                {position.candidates.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => removeCandidate(positionIndex, candidateIndex)}
+                                    className="text-red-600 hover:text-red-800"
+                                  >
+                                    <FaTrash />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="p-4 space-y-4">
+                              {/* Basic Candidate Information */}
+                              <div className="grid md:grid-cols-2 gap-4">
+                                <div>
+                                  <label className="form-label">Select User *</label>
+                                  <select
+                                    className="form-input"
+                                    value={candidate.userId}
+                                    onChange={(e) =>
+                                      handleCandidateChange(positionIndex, candidateIndex, "userId", e.target.value)
+                                    }
+                                    required
+                                  >
+                                    <option value="">Choose a registered user...</option>
+                                    {users.map((user) => (
+                                      <option key={user._id} value={user._id}>
+                                        {user.firstName} {user.lastName} ({user.email})
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="form-label">Candidate Name *</label>
+                                  <input
+                                    type="text"
+                                    className="form-input"
+                                    value={candidate.name}
+                                    onChange={(e) =>
+                                      handleCandidateChange(positionIndex, candidateIndex, "name", e.target.value)
+                                    }
+                                    placeholder="Candidate full name"
+                                    required
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="grid md:grid-cols-2 gap-4">
+                                <div>
+                                  <label className="form-label">Symbol *</label>
+                                  <input
+                                    type="text"
+                                    className="form-input"
+                                    value={candidate.symbol}
+                                    onChange={(e) =>
+                                      handleCandidateChange(positionIndex, candidateIndex, "symbol", e.target.value)
+                                    }
+                                    placeholder="e.g., 🌟, 🚀, 🎯"
+                                    required
+                                  />
+                                </div>
+                                <div>
+                                  <label className="form-label flex items-center">
+                                    <FaImage className="mr-2 text-blue-500" />
+                                    Photo URL
+                                  </label>
+                                  <input
+                                    type="url"
+                                    className="form-input"
+                                    value={candidate.photo}
+                                    onChange={(e) =>
+                                      handleCandidateChange(positionIndex, candidateIndex, "photo", e.target.value)
+                                    }
+                                    placeholder="https://example.com/photo.jpg"
+                                  />
+                                </div>
+                              </div>
+
+                              <div>
+                                <label className="form-label">
+                                  Bio * (minimum 50 characters) - {candidate.bio.length}/50
+                                </label>
+                                <textarea
+                                  rows="3"
+                                  className="form-input"
+                                  value={candidate.bio}
+                                  onChange={(e) =>
+                                    handleCandidateChange(positionIndex, candidateIndex, "bio", e.target.value)
+                                  }
+                                  placeholder="Brief biography of the candidate..."
+                                  required
+                                />
+                              </div>
+
+                              <div>
+                                <label className="form-label">
+                                  Agenda * (minimum 100 characters) - {candidate.agenda.length}/100
+                                </label>
+                                <textarea
+                                  rows="4"
+                                  className="form-input"
+                                  value={candidate.agenda}
+                                  onChange={(e) =>
+                                    handleCandidateChange(positionIndex, candidateIndex, "agenda", e.target.value)
+                                  }
+                                  placeholder="Candidate's agenda and key points..."
+                                  required
+                                />
+                              </div>
+
+                              {/* Campaign Information (Collapsible) */}
+                              {isExpanded && (
+                                <div className="border-t pt-4 mt-4">
+                                  <h6 className="font-semibold text-gray-700 mb-4">Campaign Information (Optional)</h6>
+
+                                  <div className="grid md:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                      <label className="form-label">Experience</label>
+                                      <textarea
+                                        rows="3"
+                                        className="form-input"
+                                        value={candidate.campaignInfo.experience}
+                                        onChange={(e) =>
+                                          handleCandidateChange(
+                                            positionIndex,
+                                            candidateIndex,
+                                            "campaignInfo.experience",
+                                            e.target.value,
+                                          )
+                                        }
+                                        placeholder="Previous experience and qualifications..."
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="form-label">Education</label>
+                                      <textarea
+                                        rows="3"
+                                        className="form-input"
+                                        value={candidate.campaignInfo.education}
+                                        onChange={(e) =>
+                                          handleCandidateChange(
+                                            positionIndex,
+                                            candidateIndex,
+                                            "campaignInfo.education",
+                                            e.target.value,
+                                          )
+                                        }
+                                        placeholder="Educational background..."
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="grid md:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                      <label className="form-label">Achievements (one per line)</label>
+                                      <textarea
+                                        rows="3"
+                                        className="form-input"
+                                        value={candidate.campaignInfo.achievements.join("\n")}
+                                        onChange={(e) =>
+                                          handleArrayChange(
+                                            positionIndex,
+                                            candidateIndex,
+                                            "achievements",
+                                            e.target.value,
+                                          )
+                                        }
+                                        placeholder="Key achievements and awards..."
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="form-label">Campaign Promises (one per line)</label>
+                                      <textarea
+                                        rows="3"
+                                        className="form-input"
+                                        value={candidate.campaignInfo.promises.join("\n")}
+                                        onChange={(e) =>
+                                          handleArrayChange(positionIndex, candidateIndex, "promises", e.target.value)
+                                        }
+                                        placeholder="Campaign promises and commitments..."
+                                      />
+                                    </div>
+                                  </div>
+
+                                  {/* Social Media Links */}
+                                  <div className="bg-white rounded-lg p-4 border">
+                                    <h6 className="font-medium text-gray-700 mb-3">Social Media Links</h6>
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                      <div>
+                                        <label className="form-label flex items-center">
+                                          <FaGlobe className="mr-2 text-blue-500" />
+                                          Website
+                                        </label>
+                                        <input
+                                          type="url"
+                                          className="form-input"
+                                          value={candidate.campaignInfo.socialMedia.website}
+                                          onChange={(e) =>
+                                            handleSocialMediaChange(
+                                              positionIndex,
+                                              candidateIndex,
+                                              "website",
+                                              e.target.value,
+                                            )
+                                          }
+                                          placeholder="https://candidate-website.com"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="form-label flex items-center">
+                                          <FaTwitter className="mr-2 text-blue-400" />
+                                          Twitter
+                                        </label>
+                                        <input
+                                          type="url"
+                                          className="form-input"
+                                          value={candidate.campaignInfo.socialMedia.twitter}
+                                          onChange={(e) =>
+                                            handleSocialMediaChange(
+                                              positionIndex,
+                                              candidateIndex,
+                                              "twitter",
+                                              e.target.value,
+                                            )
+                                          }
+                                          placeholder="https://twitter.com/username"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="form-label flex items-center">
+                                          <FaFacebook className="mr-2 text-blue-600" />
+                                          Facebook
+                                        </label>
+                                        <input
+                                          type="url"
+                                          className="form-input"
+                                          value={candidate.campaignInfo.socialMedia.facebook}
+                                          onChange={(e) =>
+                                            handleSocialMediaChange(
+                                              positionIndex,
+                                              candidateIndex,
+                                              "facebook",
+                                              e.target.value,
+                                            )
+                                          }
+                                          placeholder="https://facebook.com/username"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="form-label flex items-center">
+                                          <FaLinkedin className="mr-2 text-blue-700" />
+                                          LinkedIn
+                                        </label>
+                                        <input
+                                          type="url"
+                                          className="form-input"
+                                          value={candidate.campaignInfo.socialMedia.linkedin}
+                                          onChange={(e) =>
+                                            handleSocialMediaChange(
+                                              positionIndex,
+                                              candidateIndex,
+                                              "linkedin",
+                                              e.target.value,
+                                            )
+                                          }
+                                          placeholder="https://linkedin.com/in/username"
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Submit Buttons */}
+            <div className="flex justify-end space-x-4 pt-6 border-t">
               <button
                 type="button"
-                onClick={addCandidate}
-                className="btn btn-secondary-outline btn-sm flex items-center"
+                onClick={() => navigate("/admin/elections")}
+                className="btn btn-neutral flex items-center"
+                disabled={isSubmitting}
               >
-                <FaPlus className="mr-2" /> Add Candidate
+                <FaTimes className="mr-2" />
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary flex items-center" disabled={isSubmitting}>
+                <FaSave className="mr-2" />
+                {isSubmitting ? "Updating..." : "Update Election"}
               </button>
             </div>
-
-            {formData.candidates.map((candidate, index) => (
-              <div key={index} className="p-6 border-2 border-gray-200 rounded-lg bg-gray-50 space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-gray-700 flex items-center">
-                    <FaUser className="mr-2" />
-                    Candidate {index + 1}
-                  </h3>
-                  {formData.candidates.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeCandidate(index)}
-                      className="text-red-500 hover:text-red-700 p-2"
-                      title="Remove Candidate"
-                    >
-                      <FaTrash />
-                    </button>
-                  )}
-                </div>
-
-                {/* Basic Candidate Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="mb-1 flex items-center">
-                      <FaUser className="mr-2" />
-                      Select User *
-                    </label>
-                    <select
-                      value={candidate.userId}
-                      onChange={(e) => handleCandidateChange(index, "userId", e.target.value)}
-                      className="form-input"
-                      required
-                    >
-                      <option value="">Select a registered user</option>
-                      {users.map((user) => (
-                        <option key={user._id} value={user._id}>
-                          {user.firstName} {user.lastName} ({user.email})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="mb-1 flex items-center">
-                      <FaIdCard className="mr-2" />
-                      Candidate ID
-                    </label>
-                    <input
-                      type="text"
-                      value={candidate.candidateId}
-                      onChange={(e) => handleCandidateChange(index, "candidateId", e.target.value)}
-                      className="form-input bg-gray-100"
-                      placeholder="Auto-generated"
-                      readOnly
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-1">Full Name *</label>
-                    <input
-                      type="text"
-                      value={candidate.name}
-                      onChange={(e) => handleCandidateChange(index, "name", e.target.value)}
-                      className="form-input"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-1">Position *</label>
-                    <input
-                      type="text"
-                      value={candidate.position}
-                      onChange={(e) => handleCandidateChange(index, "position", e.target.value)}
-                      className="form-input"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-1 flex items-center">
-                      <FaFlag className="mr-2" />
-                      Symbol *
-                    </label>
-                    <input
-                      type="text"
-                      value={candidate.symbol}
-                      onChange={(e) => handleCandidateChange(index, "symbol", e.target.value)}
-                      className="form-input"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Bio and Agenda */}
-                <div className="space-y-4">
-                  <div>
-                    <label className="mb-1 flex items-center">
-                      <FaFileAlt className="mr-2" />
-                      Bio * (minimum 50 characters)
-                    </label>
-                    <textarea
-                      value={candidate.bio}
-                      onChange={(e) => handleCandidateChange(index, "bio", e.target.value)}
-                      className="form-input"
-                      rows="3"
-                      required
-                    />
-                    <p className="text-sm text-gray-500 mt-1">{candidate.bio.length}/50 characters minimum</p>
-                  </div>
-
-                  <div>
-                    <label className="mb-1 flex items-center">
-                      <FaBullhorn className="mr-2" />
-                      Campaign Agenda * (minimum 100 characters)
-                    </label>
-                    <textarea
-                      value={candidate.agenda}
-                      onChange={(e) => handleCandidateChange(index, "agenda", e.target.value)}
-                      className="form-input"
-                      rows="4"
-                      required
-                    />
-                    <p className="text-sm text-gray-500 mt-1">{candidate.agenda.length}/100 characters minimum</p>
-                  </div>
-                </div>
-
-                {/* Campaign Info (Optional) */}
-                <details className="bg-white p-4 rounded border">
-                  <summary className="cursor-pointer font-medium text-gray-700 mb-4">
-                    Additional Campaign Information (Optional)
-                  </summary>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="mb-1">Experience</label>
-                      <textarea
-                        value={candidate.campaignInfo.experience}
-                        onChange={(e) => handleCandidateChange(index, "campaignInfo.experience", e.target.value)}
-                        className="form-input"
-                        rows="3"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="mb-1">Education</label>
-                      <textarea
-                        value={candidate.campaignInfo.education}
-                        onChange={(e) => handleCandidateChange(index, "campaignInfo.education", e.target.value)}
-                        className="form-input"
-                        rows="3"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="mb-1">Achievements (one per line)</label>
-                      <textarea
-                        value={candidate.campaignInfo.achievements}
-                        onChange={(e) => handleCandidateChange(index, "campaignInfo.achievements", e.target.value)}
-                        className="form-input"
-                        rows="3"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="mb-1">Campaign Promises (one per line)</label>
-                      <textarea
-                        value={candidate.campaignInfo.promises}
-                        onChange={(e) => handleCandidateChange(index, "campaignInfo.promises", e.target.value)}
-                        className="form-input"
-                        rows="3"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Social Media */}
-                  <div className="mt-4">
-                    <h4 className="font-medium text-gray-700 mb-3">Social Media Links</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="mb-1">Website</label>
-                        <input
-                          type="url"
-                          value={candidate.campaignInfo.socialMedia.website}
-                          onChange={(e) => handleCandidateChange(index, "socialMedia.website", e.target.value)}
-                          className="form-input"
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-1">Twitter</label>
-                        <input
-                          type="url"
-                          value={candidate.campaignInfo.socialMedia.twitter}
-                          onChange={(e) => handleCandidateChange(index, "socialMedia.twitter", e.target.value)}
-                          className="form-input"
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-1">Facebook</label>
-                        <input
-                          type="url"
-                          value={candidate.campaignInfo.socialMedia.facebook}
-                          onChange={(e) => handleCandidateChange(index, "socialMedia.facebook", e.target.value)}
-                          className="form-input"
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-1">LinkedIn</label>
-                        <input
-                          type="url"
-                          value={candidate.campaignInfo.socialMedia.linkedin}
-                          onChange={(e) => handleCandidateChange(index, "socialMedia.linkedin", e.target.value)}
-                          className="form-input"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </details>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex justify-end space-x-4 pt-6 border-t">
-            <button
-              type="button"
-              onClick={() => navigate("/admin/elections")}
-              className="btn btn-neutral flex items-center"
-              disabled={isSubmitting}
-            >
-              <FaTimes className="mr-2" /> Cancel
-            </button>
-            <button type="submit" className="btn btn-primary flex items-center" disabled={isSubmitting || isLoading}>
-              <FaSave className="mr-2" /> {isSubmitting ? "Saving..." : "Save Changes"}
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   )

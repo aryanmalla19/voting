@@ -81,7 +81,7 @@ const Footer = () => {
           <p className="text-base text-gray-400">
             &copy; {currentYear} Secure Online Voting System. All rights reserved.
           </p>
-          <p className="mt-1 text-sm text-gray-500">Developed by Elvin & Adeep</p>
+          <p className="mt-1 text-sm text-gray-500">Developed by group of 4</p>
         </div>
       </div>
     </footer>

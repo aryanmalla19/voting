@@ -15,10 +15,6 @@ const CandidateSchema = new mongoose.Schema({
     type: String,
     required: [true, "Candidate name is required"],
   },
-  position: {
-    type: String,
-    required: [true, "Position is required"],
-  },
   bio: {
     type: String,
     required: [true, "Bio is required"],
@@ -55,6 +51,28 @@ const CandidateSchema = new mongoose.Schema({
   }
 })
 
+
+const PositionSchema = new mongoose.Schema({
+  positionId: {
+    type: String,
+    required: [true, "Position ID is required"],
+  },
+  title: {
+    type: String,
+    required: [true, "Position title is required"],
+  },
+  description: {
+    type: String,
+    required: [true, "Position description is required"],
+  },
+  maxCandidates: {
+    type: Number,
+    default: 10,
+    min: 1,
+  },
+  candidates: [CandidateSchema],
+})
+
 const ElectionSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -77,7 +95,7 @@ const ElectionSchema = new mongoose.Schema({
     enum: ["upcoming", "active", "completed"],
     default: "upcoming",
   },
-  candidates: [CandidateSchema],
+  positions: [PositionSchema],
   eligibleVoters: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -106,6 +124,7 @@ const ElectionSchema = new mongoose.Schema({
     required: [true, "Missing private key"],
   },
 })
+
 
 ElectionSchema.pre("save", function (next) {
   const now = new Date()

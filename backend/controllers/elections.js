@@ -67,37 +67,35 @@ exports.getElection = async (req, res) => {
 exports.createElection = async (req, res) => {
   try {
     const { publicKey, privateKey } = generateKeyPair()
-    const { title, description, startDate, endDate } = req.body;
-    
-    // Parse candidates JSON
-    let candidates = JSON.parse(req.body.candidates);
+    req.body.createdBy = req.user.id
+    req.body.publicKey = publicKey
+    req.body.privateKey = privateKey
 
-    // Match candidates with uploaded files
-    if (req.files && req.files.length > 0) {
-      candidates = candidates.map((cand, idx) => ({
-        ...cand,
-        photo: req.files[idx]?.path, // store path like "uploads/17245-ruk.jpg"
-      }));
+    // Generate position IDs if not provided
+    if (req.body.positions) {
+      req.body.positions.forEach((position, index) => {
+        if (!position.positionId) {
+          position.positionId = `POS_${Date.now()}_${index}`
+        }
+        // Generate candidate IDs if not provided
+        position.candidates.forEach((candidate, candidateIndex) => {
+          if (!candidate.candidateId) {
+            candidate.candidateId = `CAND_${Date.now()}_${index}_${candidateIndex}`
+          }
+          candidate.photo = req.files && req.files[candidateIndex] ? req.files[candidateIndex].path : candidate.photo || "";
+          candidate.campaignInfo.socialMedia = JSON.parse(candidate.campaignInfo.socialMedia) || "";
+          candidate.campaignInfo.achievements = JSON.parse(candidate.campaignInfo.achievements) || "";
+          candidate.campaignInfo.promises = JSON.parse(candidate.campaignInfo.promises) || "";
+        })
+      })
     }
-
-    const election = await Election.create({
-      title,
-      description,
-      startDate,
-      endDate,
-      publicKey,
-      privateKey,
-      candidates,
-      createdAt: Date.now(),
-      createdBy: req.user.id,
-    });
-
-    res.status(201).json({ success: true, data: election });
+    const election = await Election.create(req.body)
+    res.status(201).json({ success: true, data: election })
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Create election error:", error)
+    res.status(500).json({ message: "Server error", error: error.message })
   }
-};
-
+}
 
 exports.updateElection = async (req, res) => {
   try {
@@ -133,53 +131,71 @@ exports.deleteElection = async (req, res) => {
   }
 }
 
+
 const calculateResults = (election, votes) => {
-  const candidateVotes = {}
-  election.candidates.forEach((candidate) => (candidateVotes[candidate._id.toString()] = 0))
-
-  votes.forEach((vote) => {
-    try {
-      const privateKey = election.privateKey
-      if (!privateKey) {
-        console.error("Missing private key for election:", election._id)
-        return
-      }
-      const decryptedVote = decryptVote(vote.encryptedVote, election.privateKey)
-      if (decryptedVote && decryptedVote.candidateId && candidateVotes.hasOwnProperty(decryptedVote.candidateId)) {
-        candidateVotes[decryptedVote.candidateId]++
-      }
-    } catch (e) {
-      console.error("Error decrypting vote:", e) // Log decryption errors
-    }
-  })
-
-  const totalVotes = Object.values(candidateVotes).reduce((sum, count) => sum + count, 0)
-
-  const candidateResults = election.candidates.map((candidate) => {
-    const votesForCandidate = candidateVotes[candidate._id.toString()] || 0
-    const percentage = totalVotes > 0 ? (votesForCandidate / totalVotes) * 100 : 0
-    return {
-      id: candidate._id,
-      name: candidate.name,
-      position: candidate.position,
-      votes: votesForCandidate,
-      percentage: Number.parseFloat(percentage.toFixed(2)),
-    }
-  })
-
-  candidateResults.sort((a, b) => b.votes - a.votes)
-
-  return {
+  const results = {
     id: election._id,
     title: election.title,
     description: election.description,
     startDate: election.startDate,
     endDate: election.endDate,
     status: election.status,
-    totalVotes,
-    candidates: candidateResults,
-    verifiedVotes: votes.map((vote) => vote.verificationCode), // For client-side verification check
+    totalVotes: votes.length,
+    positions: [],
+    verifiedVotes: votes.map((vote) => vote.verificationCode),
   }
+
+  // Calculate results for each position
+  election.positions.forEach((position) => {
+    const positionVotes = votes.filter((vote) => vote.positionId === position.positionId)
+    const candidateVotes = {}
+
+    // Initialize vote counts
+    position.candidates.forEach((candidate) => {
+      candidateVotes[candidate.candidateId] = 0
+    })
+
+    // Count votes
+    positionVotes.forEach((vote) => {
+      try {
+        const decryptedVote = decryptVote(vote.encryptedVote, election.privateKey)
+        if (decryptedVote && decryptedVote.candidateId && candidateVotes.hasOwnProperty(decryptedVote.candidateId)) {
+          candidateVotes[decryptedVote.candidateId]++
+        }
+      } catch (e) {
+        console.error("Error decrypting vote:", e)
+      }
+    })
+
+    const totalPositionVotes = Object.values(candidateVotes).reduce((sum, count) => sum + count, 0)
+
+    const candidateResults = position.candidates.map((candidate) => {
+      const votesForCandidate = candidateVotes[candidate.candidateId] || 0
+      const percentage = totalPositionVotes > 0 ? (votesForCandidate / totalPositionVotes) * 100 : 0
+      return {
+        id: candidate._id,
+        candidateId: candidate.candidateId,
+        name: candidate.name,
+        votes: votesForCandidate,
+        percentage: Number.parseFloat(percentage.toFixed(2)),
+        photo: candidate.photo,
+        symbol: candidate.symbol,
+      }
+    })
+
+    candidateResults.sort((a, b) => b.votes - a.votes)
+
+    results.positions.push({
+      positionId: position.positionId,
+      title: position.title,
+      description: position.description,
+      totalVotes: totalPositionVotes,
+      candidates: candidateResults,
+      winner: candidateResults[0] || null,
+    })
+  })
+
+  return results
 }
 
 exports.getElectionResults = async (req, res) => {
