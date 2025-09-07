@@ -185,7 +185,8 @@ const ManageElectionsPage = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(election.startDate)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(election.endDate)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {election.candidates?.length || 0}
+                  {election.positions?.reduce(
+                  (total, pos) => total + (pos.candidates?.length || 0),0)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                     <Link

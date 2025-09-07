@@ -42,23 +42,31 @@ const ElectionCard = ({ election, formatDate, getStatusBadge, showVoteButton, sh
         </div>
       </div>
 
-      {election.candidates?.length > 0 && (
-        <div className="mb-4">
-          <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">Candidates:</h4>
-          <div className="flex flex-wrap gap-2">
-            {election.candidates.slice(0, 3).map((candidate, index) => (
-              <span key={index} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
-                {candidate.name}
-              </span>
-            ))}
-            {election.candidates.length > 3 && (
-              <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
-                +{election.candidates.length - 3} more
-              </span>
-            )}
-          </div>
-        </div>
+      {election.positions && election.positions.some(pos => pos.candidates?.length > 0) && (
+  <div className="mb-4">
+    <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">Candidates:</h4>
+    <div className="flex flex-wrap gap-2">
+      {election.positions
+        .flatMap(pos => pos.candidates || [])
+        .slice(0, 3)
+        .map((candidate, index) => (
+          <span
+            key={index}
+            className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full"
+          >
+            {candidate.name}
+          </span>
+        ))}
+
+      {election.positions.flatMap(pos => pos.candidates || []).length > 3 && (
+        <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
+          + more
+        </span>
       )}
+    </div>
+  </div>
+)}
+
     </div>
     <div className="bg-gray-50 px-6 py-4 flex justify-end items-center">
       {showVoteButton && (
@@ -95,6 +103,8 @@ const DashboardPage = () => {
           axios.get(`${API_URL}/api/elections`),
           axios.get(`${API_URL}/api/votes/history`),
         ])
+
+        console.log(electionsRes.data.data[0].positions[0].candidates);
 
         setElections({
           active: electionsRes.data.data.filter((e) => e.status === "active"),

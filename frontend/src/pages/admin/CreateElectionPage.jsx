@@ -398,7 +398,7 @@ const CreateElectionPage = () => {
 
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <div className="bg-white rounded-xl shadow-xl overflow-hidden">
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-6">
             <h1 className="text-3xl font-bold text-white flex items-center">
@@ -467,7 +467,7 @@ const CreateElectionPage = () => {
 
               <div className="grid md:grid-cols-2 gap-6 mt-4">
                 <div>
-                  <label htmlFor="startDate" className="form-label flex items-center">
+                  <label htmlFor="startDate" className="flex items-center">
                     <FaCalendarAlt className="mr-2 text-green-500" />
                     Start Date & Time *
                   </label>
@@ -482,7 +482,7 @@ const CreateElectionPage = () => {
                   />
                 </div>
                 <div>
-                  <label htmlFor="endDate" className="form-label flex items-center">
+                  <label htmlFor="endDate" className="flex items-center">
                     <FaCalendarAlt className="mr-2 text-red-500" />
                     End Date & Time *
                   </label>
@@ -542,16 +542,24 @@ const CreateElectionPage = () => {
                     {/* Position Details */}
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
-                        <label className="form-label">Position Title *</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          value={position.title}
-                          onChange={(e) => handlePositionChange(positionIndex, "title", e.target.value)}
-                          placeholder="e.g., President, Vice President"
-                          required
-                        />
-                      </div>
+  <label className="form-label">Position Title *</label>
+  <select
+    className="form-input"
+    value={position.title}
+    onChange={(e) => handlePositionChange(positionIndex, "title", e.target.value)}
+    required
+  >
+    <option value="" disabled>
+      Select a position
+    </option>
+    <option value="President">President</option>
+    <option value="Vice President">Vice President</option>
+    <option value="Secretary">Secretary</option>
+    <option value="Treasurer">Treasurer</option>
+    <option value="Member">Member</option>
+  </select>
+</div>
+
                       <div>
                         <label className="form-label">Max Candidates</label>
                         <input
@@ -658,18 +666,40 @@ const CreateElectionPage = () => {
                                   </select>
                                 </div>
                                 <div>
-                                  <label className="form-label">Symbol *</label>
-                                  <input
-                                    type="text"
-                                    className="form-input"
-                                    value={candidate.symbol}
-                                    onChange={(e) =>
-                                      handleCandidateChange(positionIndex, candidateIndex, "symbol", e.target.value)
-                                    }
-                                    placeholder="e.g., 🌟, 🚀, 🎯"
-                                    required
-                                  />
-                                </div>
+  <label className="form-label">Symbol *</label>
+  <select
+    className="form-input"
+    value={candidate.symbol}
+    onChange={(e) =>
+      handleCandidateChange(positionIndex, candidateIndex, "symbol", e.target.value)
+    }
+    required
+  >
+    <option value="" disabled>
+      Select a symbol
+    </option>
+    <option value="🌟">🌟 Star</option>
+    <option value="🚀">🚀 Rocket</option>
+    <option value="🎯">🎯 Target</option>
+    <option value="🔥">🔥 Fire</option>
+    <option value="🍀">🍀 Clover</option>
+    <option value="🌈">🌈 Rainbow</option>
+    <option value="💎">💎 Diamond</option>
+    <option value="🦄">🦄 Unicorn</option>
+    <option value="⚡">⚡ Lightning</option>
+    <option value="🎵">🎵 Music</option>
+    <option value="🛡️">🛡️ Shield</option>
+    <option value="🌹">🌹 Rose</option>
+    <option value="🐱">🐱 Cat</option>
+    <option value="🐶">🐶 Dog</option>
+    <option value="🌞">🌞 Sun</option>
+    <option value="🌙">🌙 Moon</option>
+    <option value="🍎">🍎 Apple</option>
+    <option value="⚽">⚽ Soccer</option>
+    <option value="🎲">🎲 Dice</option>
+  </select>
+</div>
+
                               </div>
 
                               <div>
@@ -685,7 +715,7 @@ const CreateElectionPage = () => {
 
                               {/* Photo Upload */}
                               <div>
-                                <label className="form-label flex items-center">
+                                <label className="flex items-center">
                                   <FaCamera className="mr-2 text-blue-500" />
                                   Candidate Photo *
                                 </label>
